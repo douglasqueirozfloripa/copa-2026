@@ -822,7 +822,7 @@ function renderToast(){
   // fase de grupos + mata-mata, num só timeline
   const grp=STATE.matches.map(m=>{const p=fmtParts(m);return {home:m.home,away:m.away,hs:m.hs,as:m.as,
     decided:(m.hs!==null&&m.as!==null&&!LIVE_IDS.has(m.id)),live:LIVE_IDS.has(m.id),winner:null,
-    dt:matchDT(m).getTime(),label:p.dateLabel};});
+    dt:matchDT(m).getTime(),label:p.dateLabel,time:p.time};});
   const all=grp.concat(koEntries());
   const upcoming=all.filter(e=>!e.decided&&!e.live).sort((a,b)=>a.dt-b.dt).slice(0,4);
   const recent=all.filter(e=>e.decided).sort((a,b)=>b.dt-a.dt).slice(0,4);
@@ -832,7 +832,7 @@ function renderToast(){
     if(e.winner) return `${flag(e.home)} ${bold(e,e.home)} <span class="x">×</span> ${bold(e,e.away)} ${flag(e.away)}`;
     return `${flag(e.home)} ${e.home} <span class="x">×</span> ${e.away} ${flag(e.away)}`;
   };
-  const row=(e)=>`<div class="t-row"><span class="nm">${nm(e)}</span><span class="dt">${e.label}</span></div>`;
+  const row=(e)=>`<div class="t-row"><span class="nm">${nm(e)}</span><span class="dt">${e.label}${e.time?" · "+e.time:""}</span></div>`;
   let h=`<div class="t-sec">${t("toast_next")}</div>`;
   h+= upcoming.length ? upcoming.map(row).join("") : `<div class="t-row muted">—</div>`;
   h+=`<div class="t-sec">${t("toast_recent")}</div>`;
