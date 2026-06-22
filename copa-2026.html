@@ -82,6 +82,16 @@
     text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;animation:livepulse 1.2s infinite}
   @keyframes livepulse{0%,100%{opacity:1}50%{opacity:.55}}
   .match .live-watch{grid-column:1/-1;font-size:11px;color:var(--muted);margin-bottom:6px}
+  .match .live-warn{margin-bottom:8px}
+  .match .live-synced{margin-bottom:8px;color:var(--ok,#36d399);font-weight:700}
+  /* overlay de carregamento do atualizador (crawler) */
+  #crawl-spin{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
+  #crawl-spin .cs-box{background:var(--card,#10233f);border:1px solid var(--accent,#36d399);border-radius:14px;padding:26px 30px;text-align:center;max-width:80%}
+  #crawl-spin .cs-ring{width:46px;height:46px;margin:0 auto 14px;border:4px solid rgba(255,255,255,.18);border-top-color:var(--accent,#36d399);border-radius:50%;animation:csspin 1s linear infinite}
+  #crawl-spin .cs-msg{color:#fff;font-size:14px}
+  @keyframes csspin{to{transform:rotate(360deg)}}
+  .match .live-fifa{color:#fff;background:rgba(255,255,255,.2);border-radius:5px;padding:0 6px;font-size:9px;font-weight:700;text-decoration:none;margin-left:4px}
+  .match .live-fifa:hover{background:rgba(255,255,255,.35)}
   .match.sim .meta{opacity:.95}
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
   .modal-bg.show{display:flex}
@@ -457,13 +467,15 @@ const FLAGS = {
   "Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croácia":"🇭🇷","Gana":"🇬🇭","Panamá":"🇵🇦"
 };
 const LAST_UPDATE = "22 de junho de 2026 (fim da 2ª rodada)";
-const DATA_VERSION = 6; // ao atualizar os resultados oficiais embutidos, incrementar este número
+const DATA_VERSION = 10; // ao atualizar os resultados oficiais embutidos, incrementar este número
 // jogos EM ANDAMENTO (placar parcial) — atualizado por mim ao buscar na FIFA
-const LIVE_IDS = new Set([41]);            // Argentina x Áustria
+const LIVE_IDS = new Set([41]);            // Argentina x Áustria (inicial; vira dinâmico após o crawler)
+const LIVE_NOW = {};                       // id -> {hs,as,label,ts} capturado AO VIVO da FIFA pelo atualizador local
 // minuto REAL ancorado no valor da FIFA: {m: minuto, h: "1T"|"2T"|"INT", at: instante (ms) em que esse minuto valia}
 // o relógio do app "anda" a partir daí, então fica em tempo real e bate com a FIFA. Atualizado pela rotina automática.
-const LIVE_INFO = {41:{m:75,h:"2T"}}; // minuto da FIFA (m) no instante (at); o app faz andar em tempo real
+const LIVE_INFO = {41:{m:82,h:"2T",at:1782153994847}}; // minuto da FIFA (m) no instante (at); o app faz o minuto andar em tempo real
 const CHANNELS = ["Globo","SBT","sportv","Cazé TV","Globoplay","N Sports","GE TV"]; // transmissão (Brasil)
+const FIFA_FIXTURES_URL = "https://www.fifa.com/pt/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures?country=BR&wtw-filter=ALL";
 // Códigos FIFA p/ bandeiras oficiais: https://api.fifa.com/api/v3/picture/flags-sq-1/{CODE}
 const CODES = {
   "México":"MEX","África do Sul":"RSA","Coreia do Sul":"KOR","República Tcheca":"CZE",
@@ -538,7 +550,7 @@ const BASE_MATCHES = [
   m(38,2,"G","2026-06-21","16:00","Los Angeles","Bélgica","Irã",0,0),
   m(39,2,"H","2026-06-21","19:00","Miami","Uruguai","Cabo Verde",2,2),
   m(40,2,"G","2026-06-21","22:00","Vancouver","Nova Zelândia","Egito",1,3),
-  m(41,2,"J","2026-06-22","14:00","Dallas","Argentina","Áustria",1,0),
+  m(41,2,"J","2026-06-22","14:00","Dallas","Argentina","Áustria",2,0),
   m(42,2,"I","2026-06-22","18:00","Philadelphia","França","Iraque"),
   m(43,2,"I","2026-06-22","21:00","Nova York/NJ","Noruega","Senegal"),
   m(44,2,"J","2026-06-23","00:00","San Francisco","Jordânia","Argélia"),
@@ -705,6 +717,18 @@ const NAVSTUDIO={pt:"🎓 Estúdio",en:"🎓 Studio",es:"🎓 Estudio",fr:"🎓 
 for(const c in I18N){ I18N[c].nav_studio = NAVSTUDIO[c]||NAVSTUDIO.en; }
 const LIVET={pt:"AO VIVO",en:"LIVE",es:"EN VIVO",fr:"EN DIRECT",de:"LIVE",it:"LIVE",ja:"ライブ",ko:"라이브",ar:"مباشر",fa:"زنده"};
 for(const c in I18N){ I18N[c].live_tag = LIVET[c]||LIVET.en; }
+const LIVEUNSYNC={pt:"Minuto estimado pelo horário de início — placar não sincronizado. Confira na FIFA",en:"Minute estimated from kickoff — score not synced. Check on FIFA",es:"Minuto estimado por el inicio — marcador no sincronizado. Verifica en FIFA",fr:"Minute estimée depuis le coup d'envoi — score non synchronisé. Vérifiez sur la FIFA",de:"Minute ab Anpfiff geschätzt — Ergebnis nicht synchronisiert. Auf FIFA prüfen",it:"Minuto stimato dal calcio d'inizio — punteggio non sincronizzato. Verifica sulla FIFA"};
+for(const c in I18N){ I18N[c].live_unsync = LIVEUNSYNC[c]||LIVEUNSYNC.en; }
+// textos do atualizador (crawler local via fetch)
+const CRAWL={
+  pt:{spin:"Buscando resultados na FIFA…",ok:"Atualizado pela FIFA: {fin} jogos encerrados, {live} ao vivo.",off:"Não encontrei o atualizador local. Inicie-o (abra o app por http://localhost:8787) para buscar ao vivo. Apliquei os resultados oficiais embutidos por enquanto.",synced:"Capturado da FIFA ao vivo"},
+  en:{spin:"Fetching results from FIFA…",ok:"Updated from FIFA: {fin} finished, {live} live.",off:"Local updater not found. Start it (open the app at http://localhost:8787) to fetch live. Applied bundled official results for now.",synced:"Captured live from FIFA"},
+  es:{spin:"Buscando resultados en la FIFA…",ok:"Actualizado por la FIFA: {fin} finalizados, {live} en vivo.",off:"No encontré el actualizador local. Inícialo (abre la app en http://localhost:8787) para buscar en vivo. Apliqué los oficiales por ahora.",synced:"Capturado en vivo de la FIFA"},
+  fr:{spin:"Récupération des résultats sur la FIFA…",ok:"Mis à jour via la FIFA : {fin} terminés, {live} en direct.",off:"Updater local introuvable. Lancez-le (ouvrez l'app sur http://localhost:8787) pour le direct. Résultats officiels appliqués pour l'instant.",synced:"Capturé en direct de la FIFA"},
+  de:{spin:"Ergebnisse von der FIFA werden geladen…",ok:"Über FIFA aktualisiert: {fin} beendet, {live} live.",off:"Lokaler Updater nicht gefunden. Starte ihn (App über http://localhost:8787 öffnen) für Live. Vorerst offizielle Ergebnisse angewandt.",synced:"Live von der FIFA erfasst"},
+  it:{spin:"Recupero dei risultati dalla FIFA…",ok:"Aggiornato dalla FIFA: {fin} conclusi, {live} in diretta.",off:"Updater locale non trovato. Avvialo (apri l'app su http://localhost:8787) per la diretta. Applicati i risultati ufficiali per ora.",synced:"Catturato in diretta dalla FIFA"}
+};
+for(const c in I18N){ const x=CRAWL[c]||CRAWL.en; I18N[c].spin_msg=x.spin; I18N[c].crawl_ok=x.ok; I18N[c].crawl_off=x.off; I18N[c].live_synced=x.synced; }
 // botão para mostrar/ocultar as datas já realizadas na lista de jogos
 const PAST={
  pt:["▸ Ver {n} datas já realizadas","▾ Ocultar datas já realizadas"],
@@ -776,23 +800,43 @@ function applyI18n(){
 /* ============================================================
    TOAST — próximos 4 jogos e últimos 4 resultados
    ============================================================ */
+// datas (sortáveis) e rótulo de cada fase do mata-mata
+const KO_DATE={r32:"2026-06-28T16:00",r16:"2026-07-04T14:00",qf:"2026-07-09T17:00",sf:"2026-07-14T16:00",third:"2026-07-18T18:00",final:"2026-07-19T16:00"};
+function koRoundLabel(r){ return r==="final"?t("final"):r==="third"?t("third_place"):t(r); }
+// confrontos do mata-mata (do chaveamento atual) para o toast
+function koEntries(){
+  const b=(typeof buildBracket==="function")?buildBracket():null; if(!b||!STATE.ko.r32) return [];
+  const rounds=[["r32",b.r32],["r16",b.r16],["qf",b.qf],["sf",b.sf],["third",[b.third]],["final",[b.final]]];
+  const out=[];
+  rounds.forEach(([key,ties])=>ties.forEach((tie,idx)=>{
+    if(!tie||!tie.a||!tie.b) return;
+    const k=key+"_"+idx, pick=STATE.ko.picks&&STATE.ko.picks[k], sc=STATE.ko.scores&&STATE.ko.scores[k];
+    out.push({home:tie.a,away:tie.b,hs:sc?sc.hs:null,as:sc?sc.as:null,decided:!!pick,winner:pick||null,
+      label:koRoundLabel(key),dt:new Date(KO_DATE[key]).getTime()+idx*60000});
+  }));
+  return out;
+}
 function renderToast(){
   const body=document.getElementById("toast-body"); if(!body) return;
   document.getElementById("toast-title").textContent=t("matches_title");
-  const byTime=(a,b)=>(a.d+a.h).localeCompare(b.d+b.h);
-  const upcoming=STATE.matches.filter(m=>m.hs===null||m.as===null).sort(byTime).slice(0,4);
-  const played=STATE.matches.filter(m=>m.hs!==null&&m.as!==null&&!LIVE_IDS.has(m.id)).sort((a,b)=>byTime(b,a)).slice(0,4);
-  const row=(inner,dt)=>`<div class="t-row"><span class="nm">${inner}</span><span class="dt">${dt}</span></div>`;
+  // fase de grupos + mata-mata, num só timeline
+  const grp=STATE.matches.map(m=>{const p=fmtParts(m);return {home:m.home,away:m.away,hs:m.hs,as:m.as,
+    decided:(m.hs!==null&&m.as!==null&&!LIVE_IDS.has(m.id)),live:LIVE_IDS.has(m.id),winner:null,
+    dt:matchDT(m).getTime(),label:p.dateLabel};});
+  const all=grp.concat(koEntries());
+  const upcoming=all.filter(e=>!e.decided&&!e.live).sort((a,b)=>a.dt-b.dt).slice(0,4);
+  const recent=all.filter(e=>e.decided).sort((a,b)=>b.dt-a.dt).slice(0,4);
+  const bold=(e,team)=> e.winner===team ? "<b>"+team+"</b>" : team;
+  const nm=(e)=>{
+    if(e.hs!=null&&e.as!=null) return `${flag(e.home)} ${bold(e,e.home)} <span class="sc">${e.hs}×${e.as}</span> ${bold(e,e.away)} ${flag(e.away)}`;
+    if(e.winner) return `${flag(e.home)} ${bold(e,e.home)} <span class="x">×</span> ${bold(e,e.away)} ${flag(e.away)}`;
+    return `${flag(e.home)} ${e.home} <span class="x">×</span> ${e.away} ${flag(e.away)}`;
+  };
+  const row=(e)=>`<div class="t-row"><span class="nm">${nm(e)}</span><span class="dt">${e.label}</span></div>`;
   let h=`<div class="t-sec">${t("toast_next")}</div>`;
-  h+= upcoming.length ? upcoming.map(m=>{const p=fmtParts(m);return row(
-        `${flag(m.home)} ${m.home} <span class="x">×</span> ${m.away} ${flag(m.away)}`,
-        `${p.dateLabel} ${p.time}`);}).join("")
-      : `<div class="t-row muted">—</div>`;
+  h+= upcoming.length ? upcoming.map(row).join("") : `<div class="t-row muted">—</div>`;
   h+=`<div class="t-sec">${t("toast_recent")}</div>`;
-  h+= played.length ? played.map(m=>{const p=fmtParts(m);return row(
-        `${flag(m.home)} ${m.home} <span class="sc">${m.hs}×${m.as}</span> ${m.away} ${flag(m.away)}`,
-        p.dateLabel);}).join("")
-      : `<div class="t-row muted">—</div>`;
+  h+= recent.length ? recent.map(row).join("") : `<div class="t-row muted">—</div>`;
   body.innerHTML=h;
 }
 
@@ -876,19 +920,33 @@ function liveStatus(mt){
   if(e<=130) return "2º tempo";
   return "";
 }
-// minuto/status PRECISO da FIFA (preenchido pela rotina automática), correndo em tempo real a partir da âncora.
+// minuto/status do AO VIVO calculado pelo próprio JavaScript a partir do horário de início do jogo.
+// Avança sozinho (sem depender de rotina externa). O setInterval no fim do arquivo re-renderiza a faixa.
+// LIVE_INFO.h, se presente, é só um reforço opcional para INT; o minuto vem sempre do relógio.
 function liveLabel(mt){
   const li=LIVE_INFO[mt.id];
-  if(li && typeof li==="object"){
-    if(li.h==="INT") return "Intervalo";
-    // âncora: minuto m no instante at (epoch ms). O relógio faz o minuto andar em tempo real.
-    const extra = li.at ? Math.max(0,Math.floor((Date.now()-li.at)/60000)) : 0;
-    const m = (li.m!=null?li.m:0) + extra;
-    if(m>120) return (li.h==="1T"?"1º tempo":"2º tempo");
-    return m+"' · "+(li.h==="1T"?"1º tempo":"2º tempo");
+  if(li && typeof li==="object" && li.h==="INT") return "Intervalo";
+  const e=(Date.now()-matchDT(mt).getTime())/60000; // minutos desde o início
+  if(e<0)    return "";
+  if(e<45)   return (Math.floor(e)+1)+"' · 1º tempo";   // 1'..45'
+  if(e<48)   return "45+' · 1º tempo";                  // acréscimos 1º tempo
+  if(e<63)   return "Intervalo";                        // ~15 min de intervalo
+  if(e<108)  return (45+Math.floor(e-63)+1)+"' · 2º tempo"; // 46'..90'
+  if(e<111)  return "90+' · 2º tempo";                  // acréscimos 2º tempo
+  return "2º tempo";
+}
+// HTML da faixa AO VIVO. Se houver captura real da FIFA (LIVE_NOW), mostra o minuto+placar capturados;
+// senão, cai no minuto estimado pelo relógio (liveLabel).
+function liveStripHTML(mt){
+  const fifa=' <a class="live-fifa" href="'+FIFA_FIXTURES_URL+'" target="_blank" rel="noopener" title="FIFA">FIFA ↗</a>';
+  const now=LIVE_NOW[mt.id];
+  if(now){
+    const sc=(now.hs!=null&&now.as!=null)?(' · <b>'+now.hs+'×'+now.as+'</b>'):'';
+    const lbl=now.label?(' · '+now.label):'';
+    return '🔴 '+t("live_tag")+lbl+sc+fifa;
   }
-  if(typeof li==="string" && li) return li;
-  return liveStatus(mt);
+  const lbl=liveLabel(mt);
+  return '🔴 '+t("live_tag")+(lbl?" · "+lbl:"")+fifa;
 }
 // retorna data/hora do jogo já convertidas para o fuso do idioma selecionado
 function fmtParts(mt){
@@ -949,7 +1007,7 @@ function renderMatches(){
       const el=document.createElement("div");
       el.className="match"+(played?" played":"")+(isSim?" sim":"");
       el.innerHTML=`
-        ${LIVE_IDS.has(mt.id)?`<div class="live-strip" data-live="${mt.id}">🔴 ${t("live_tag")}${liveLabel(mt)?" · "+liveLabel(mt):""}</div><div class="live-watch">🕒 ${time} · ${t("watch_label")} ${CHANNELS.join(" · ")}</div>`:""}
+        ${LIVE_IDS.has(mt.id)?`<div class="live-strip" data-live="${mt.id}">${liveStripHTML(mt)}</div><div class="live-watch ${LIVE_NOW[mt.id]?"live-synced":"live-warn"}">${LIVE_NOW[mt.id]?("✅ "+t("live_synced")):("⚠️ "+t("live_unsync"))}</div><div class="live-watch">🕒 ${time} · ${t("watch_label")} ${CHANNELS.join(" · ")}</div>`:""}
         <div class="meta">${time}<br><span class="grp-badge">${t("group")} ${mt.g}</span>${isSim?` <span class="sim-badge">${t("sim_tag")}</span>`:""}<br>${mt.c}</div>
         <div class="t-home"><span class="flag">${flag(mt.home)}</span>${mt.home}</div>
         <div class="score">
@@ -1099,6 +1157,7 @@ function renderKO(){
       <div class="name"><span class="flag">${flag(champ)}</span> ${champ}</div></div>`;
   }
   renderKOPanel();
+  renderToast(); // mantém Próximos/Últimos do toast em sincronia com o mata-mata
   if(wrap) wrap.scrollLeft=_sx; // restaura a rolagem
 }
 // painel de RESULTADOS do mata-mata (placares editáveis, como em Jogos & Datas)
@@ -1385,8 +1444,71 @@ function doUpdate(){
   refreshOfficial();
   openModal(t("modal_text").replace("{date}",t("updated_value")).replace("{n}",countPlayed()), true);
 }
-document.getElementById("btn-atualizar").addEventListener("click",doUpdate);
-const btnUp2=document.getElementById("btn-atualizar-2"); if(btnUp2) btnUp2.addEventListener("click",doUpdate);
+
+// ===== Atualizador AO VIVO: o botão dispara o crawler local (Playwright) via fetch =====
+// Servido por server.js. Se o app está em http://localhost:8787 usa caminho relativo;
+// se aberto como arquivo (file://), tenta o localhost. Sem o servidor, cai no oficial embutido.
+const SCRAPE_URL=((location.protocol==="http:"||location.protocol==="https:")?"":"http://localhost:8787")+"/scrape";
+let livePollTimer=null;
+const _norm=s=>(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+// nomes da FIFA -> nomes usados no app
+const FIFA2APP={"republica da coreia":"Coreia do Sul","tchequia":"República Tcheca","bosnia e herzegovina":"Bósnia-Herzegovina","eua":"Estados Unidos","holanda":"Países Baixos","ri do ira":"Irã","turkiye":"Turquia","rd do congo":"RD Congo"};
+function findMatchByNames(homeF,awayF){
+  const h=_norm(FIFA2APP[_norm(homeF)]||homeF), a=_norm(FIFA2APP[_norm(awayF)]||awayF);
+  return STATE.matches.find(m=>_norm(m.home)===h&&_norm(m.away)===a);
+}
+function spin(on,msg){
+  let o=document.getElementById("crawl-spin");
+  if(on){
+    if(!o){o=document.createElement("div");o.id="crawl-spin";o.innerHTML='<div class="cs-box"><div class="cs-ring"></div><div class="cs-msg"></div></div>';document.body.appendChild(o);}
+    o.querySelector(".cs-msg").textContent=msg||t("spin_msg"); o.style.display="flex";
+  } else if(o){ o.style.display="none"; }
+}
+async function fetchScrape(){
+  const r=await fetch(SCRAPE_URL,{cache:"no-store"});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  const d=await r.json(); if(!d.ok) throw new Error(d.erro||"falha"); return d.jogos||[];
+}
+function applyScraped(jogos){
+  let fin=0,live=0;
+  for(const k in LIVE_NOW) delete LIVE_NOW[k];      // zera o ao vivo anterior
+  jogos.forEach(j=>{
+    const mt=findMatchByNames(j.home,j.away); if(!mt) return;
+    if(j.hs!=null&&j.as!=null){ mt.hs=j.hs; mt.as=j.as; }   // aplica placar (parcial ou final)
+    if(j.aoVivo&&!j.encerrado){ LIVE_NOW[mt.id]={hs:j.hs,as:j.as,label:(j.status||"").trim(),ts:Date.now()}; live++; }
+    else if(j.encerrado){ fin++; }
+  });
+  LIVE_IDS.clear(); Object.keys(LIVE_NOW).forEach(id=>LIVE_IDS.add(+id));  // ao vivo vira dinâmico
+  STATE.updatedAt=Date.now(); saveState();
+  return {fin,live};
+}
+function startLivePoll(){
+  if(livePollTimer){ clearInterval(livePollTimer); livePollTimer=null; }
+  if(!Object.keys(LIVE_NOW).length) return;          // nada ao vivo: não fica buscando
+  livePollTimer=setInterval(async()=>{
+    try{
+      applyScraped(await fetchScrape());
+      renderStandings(); renderMatches(); renderToast();   // reflete placar/minuto ao vivo em tempo real
+      if(!Object.keys(LIVE_NOW).length){ clearInterval(livePollTimer); livePollTimer=null; }
+    }catch(e){ clearInterval(livePollTimer); livePollTimer=null; } // servidor caiu: para o polling
+  },30000);
+}
+async function crawlUpdate(){
+  spin(true,t("spin_msg"));
+  try{
+    const {fin,live}=applyScraped(await fetchScrape());
+    renderStandings(); renderMatches(); renderToast();
+    spin(false);
+    startLivePoll();                                  // se há ao vivo, segue atualizando sozinho
+    openModal(t("crawl_ok").replace("{fin}",fin).replace("{live}",live), false);
+  }catch(e){
+    spin(false);
+    refreshOfficial();                                // sem o atualizador local: aplica oficiais embutidos
+    openModal(t("crawl_off"), false);
+  }
+}
+document.getElementById("btn-atualizar").addEventListener("click",crawlUpdate);
+const btnUp2=document.getElementById("btn-atualizar-2"); if(btnUp2) btnUp2.addEventListener("click",crawlUpdate);
 // Ranking: Simular e Limpar
 const btnSim=document.getElementById("btn-simular");
 if(btnSim) btnSim.addEventListener("click",()=>{ simulate(); openModal(t("sim_done"), false); });
@@ -1473,6 +1595,21 @@ document.querySelectorAll('#studio-sizes .btn').forEach(b=>b.addEventListener("c
 
 saveState();  // regrava o estado já com a versão atual (corrige dados antigos salvos no navegador)
 applyI18n();  // popula filtros + renderiza tudo no idioma escolhido
+
+// minuto do jogo ao vivo anda sozinho (a cada 1 min, a partir da âncora — sem buscar dados)
+// ---- Relógio AO VIVO: o minuto avança sozinho via JavaScript (a cada 20s) ----
+// Atualiza só a faixa "🔴 AO VIVO" de cada jogo (sem re-renderizar a lista),
+// preservando o link da FIFA e sem perder foco/scroll dos campos de placar.
+function tickLive(){
+  if(!LIVE_IDS.size) return;
+  document.querySelectorAll('.live-strip[data-live]').forEach(el=>{
+    const id=+el.dataset.live;
+    const mt=STATE.matches.find(m=>m.id===id);
+    if(!mt) return;
+    el.innerHTML=liveStripHTML(mt);
+  });
+}
+setInterval(tickLive, 20000);
 </script>
 </body>
 </html>

@@ -209,7 +209,8 @@ function run(){
   ok(dG.querySelector('#matches-body input.sc[data-id="31"]').value === "3", "2ª rodada visível (Brasil x Haiti = 3)");
   ok(!!dG.getElementById('btn-atualizar-2'), "botão Atualizar também na tela de Classificação");
   dG.getElementById('btn-atualizar-2').click();
-  ok(dG.getElementById('modal-bg').classList.contains('show'), "Atualizar na Classificação recalcula e confirma");
+  ok(dG.getElementById('crawl-spin') && dG.getElementById('crawl-spin').style.display==='flex',
+     "Atualizar dispara o atualizador (spinner de carregamento aparece)");
 
   console.log("\n== Teste H: aba Ranking FIFA + Simular jogos restantes ==");
   const domH = boot(); const dH = domH.window.document; const stH=()=>getState(domH.window);
@@ -380,13 +381,13 @@ function run(){
   { const tp=dU.getElementById('toggle-past'); if(tp) tp.click(); } // garante todas as datas visíveis
   ok(dU.querySelectorAll('#matches-body .live-strip').length >= 1, "faixa 🔴 AO VIVO aparece acima do jogo em andamento");
   const argInput = dU.querySelector('#matches-body input.sc[data-id="41"][data-side="hs"]');
-  ok(argInput && argInput.value === "1", "placar parcial da Argentina (1) já vem preenchido");
+  ok(argInput && argInput.value === "2", "placar parcial da Argentina já vem preenchido");
   // o jogo ao vivo NÃO entra em 'últimos resultados' do toast
   const recentTxt = [...dU.querySelectorAll('#toast-body .t-row')].map(r=>r.textContent).join(" ");
   ok(!/Áustria/.test(recentTxt) || true, "jogo ao vivo não é listado como resultado final no toast");
   // refreshOfficial mantém o jogo ao vivo
   wU.eval("refreshOfficial();");
-  ok(getState(wU).matches.find(m=>m.id===41).hs===1, "após Atualizar, o parcial do jogo ao vivo permanece");
+  ok(getState(wU).matches.find(m=>m.id===41).hs===2, "após Atualizar, o parcial do jogo ao vivo permanece");
 
   console.log(`\n==== RESULTADO: ${pass} passaram, ${fail} falharam ====`);
   process.exit(fail>0?1:0);

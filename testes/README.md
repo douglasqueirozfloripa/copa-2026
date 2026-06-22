@@ -1,5 +1,10 @@
 # Testes do app Copa 2026
 
+> ⚠️ **Atualização ao vivo pelo botão:** para o botão "Atualizar resultados" buscar os placares
+> na FIFA, é preciso **subir o atualizador antes de abrir a página**: `node server.js` na pasta do
+> projeto e acessar o app por **http://localhost:8787** (não abra o `copa-2026.html` direto). Passo
+> a passo em `../COMO-ATUALIZAR.md`. Sem o servidor no ar, o botão cai nos resultados oficiais embutidos.
+
 Dois conjuntos de testes que exercitam o app de ponta a ponta: preenchem o placar dos 72 jogos, conferem a classificação e a **repescagem (8 melhores terceiros)**, validam a persistência (localStorage), simulam o mata-mata **até a final e a disputa de 3º lugar**, e ainda checam o **toast de próximos/últimos jogos** e a **troca de idioma (incl. RTL)**.
 
 ## 1) Testes rápidos (jsdom — só Node, sem navegador)

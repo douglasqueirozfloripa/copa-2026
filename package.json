@@ -1,0 +1,12 @@
+{
+  "name": "copa-2026",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Atualizador local (Playwright) que serve o app da Copa 2026 e busca placares ao vivo da FIFA",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}

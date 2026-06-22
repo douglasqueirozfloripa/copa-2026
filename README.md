@@ -2,7 +2,7 @@
 
 Aplicativo web de página única para acompanhar e **simular** toda a Copa do Mundo FIFA 2026. Permite preencher o placar dos jogos, ver a classificação dos grupos calculada em tempo real e montar o mata-mata até a final, seguindo o chaveamento oficial da FIFA (formato de 48 seleções, 12 grupos).
 
-O projeto inteiro é um único arquivo HTML autocontido ([`copa-2026.html`](copa-2026.html)) — sem dependências, sem build, sem servidor. Basta abrir no navegador.
+O projeto inteiro é um único arquivo HTML autocontido ([`copa-2026.html`](copa-2026.html)) — sem dependências, sem build. Basta abrir no navegador. (Só o botão **"Atualizar"**, que busca os placares ao vivo da FIFA, precisa do atualizador local — veja [a seção abaixo](#-atualizar-os-placares-pela-fifa-botão-atualizar).)
 
 ## ✨ Funcionalidades
 
@@ -28,6 +28,22 @@ python3 -m http.server 8000
 ```
 
 E acesse `http://localhost:8000/copa-2026.html`.
+
+## 🔄 Atualizar os placares pela FIFA (botão "Atualizar")
+
+O uso normal **não precisa de servidor**. Mas o botão **"Atualizar"** busca os placares ao vivo direto da FIFA usando um crawler (Playwright) que roda por trás dos panos — e isso exige o **atualizador local** no ar.
+
+> ⚠️ **Ordem certa:** suba o atualizador **ANTES** de abrir a página e acesse o app por `http://localhost:8787` (não abra o `copa-2026.html` por duplo clique).
+
+```bash
+npm install          # primeira vez
+npx playwright install chromium   # primeira vez
+node server.js       # 1º — sobe o atualizador + serve o app
+```
+
+Depois: **2º** abra `http://localhost:8787` → **3º** clique em **"Atualizar"**. Aparece um spin de carregamento enquanto o crawler lê a FIFA; ao terminar, os placares são aplicados (e jogos ao vivo aparecem em tempo real). Sem o servidor no ar, o botão usa os resultados oficiais embutidos.
+
+Passo a passo completo em [`COMO-ATUALIZAR.md`](COMO-ATUALIZAR.md).
 
 ## 🧪 Testes
 
@@ -64,9 +80,12 @@ Mais detalhes sobre cada cenário em [`testes/README.md`](testes/README.md).
 ```
 .
 ├── copa-2026.html      # o app inteiro (HTML + CSS + JS)
+├── server.js           # atualizador local (Node + Playwright): serve o app e expõe /scrape
+├── COMO-ATUALIZAR.md   # guia do botão "Atualizar" (crawler da FIFA)
 └── testes/             # suíte de testes automatizados
     ├── unit.js             # testes unitários da lógica
     ├── run-jsdom.js        # testes de fluxo/integração via jsdom
     ├── copa.spec.js        # testes E2E (Playwright)
+    ├── fifa-scrape.js      # crawler da FIFA por linha de comando
     └── playwright.config.js
 ```
