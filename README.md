@@ -15,6 +15,13 @@ O projeto inteiro é um único arquivo HTML autocontido ([`copa-2026.html`](copa
 - **Toast de próximos/últimos jogos**, considerando o fuso horário.
 - **Multi-idioma (i18n)** — português, inglês, espanhol, francês, alemão, italiano, árabe, persa e japonês, **com suporte a RTL** (árabe e persa).
 
+## ⬇️ Baixar o projeto
+
+Antes de qualquer coisa, é preciso ter o projeto na sua máquina:
+
+- **Sem instalar nada:** abra **https://github.com/douglasqueirozfloripa/copa-2026** → botão verde **`Code`** → **`Download ZIP`** → descompacte.
+- **Com Git:** `git clone https://github.com/douglasqueirozfloripa/copa-2026.git`
+
 ## 🚀 Como usar
 
 Abra o arquivo [`copa-2026.html`](copa-2026.html) diretamente no navegador (duplo clique) — não precisa instalar nada.
@@ -31,15 +38,26 @@ E acesse `http://localhost:8000/copa-2026.html`.
 
 ## 🔄 Atualizar os placares pela FIFA (botão "Atualizar")
 
-O uso normal **não precisa de servidor**. Mas o botão **"Atualizar"** busca os placares ao vivo direto da FIFA usando um crawler (Playwright) que roda por trás dos panos — e isso exige o **atualizador local** no ar.
+O uso normal **não precisa de servidor**. Mas o botão **"Atualizar"** busca os placares ao vivo direto da FIFA usando um crawler (Playwright) que roda por trás dos panos — e isso exige o **atualizador local** no ar. Requer **Node.js** instalado ([nodejs.org](https://nodejs.org), versão LTS).
+
+### Jeito fácil (1 clique)
+
+- **Mac:** dois cliques em [`iniciar.command`](iniciar.command) _(se bloquear: botão direito → Abrir → Abrir)_.
+- **Windows:** dois cliques em [`iniciar.bat`](iniciar.bat).
+
+Instala o que falta, captura na FIFA, aplica os placares e abre o app no navegador — sozinho.
+
+### Jeito manual (terminal)
 
 > ⚠️ **Ordem certa:** suba o atualizador **ANTES** de abrir a página e acesse o app por `http://localhost:8787` (não abra o `copa-2026.html` por duplo clique).
 
 ```bash
-npm install          # primeira vez
-npx playwright install chromium   # primeira vez
-node server.js       # 1º — sobe o atualizador + serve o app
+npm install                       # 1ª vez (instala o playwright)
+npx playwright install chromium   # 1ª vez (baixa o navegador)
+node server.js                    # sobe o atualizador + serve o app
 ```
+
+> No **Mac** use o **Terminal**; no **Windows**, o **Prompt de Comando** ou **PowerShell** — sempre dentro da pasta do projeto.
 
 Depois: **2º** abra `http://localhost:8787` → **3º** clique em **"Atualizar"**. Aparece um spin de carregamento enquanto o crawler lê a FIFA; ao terminar, os placares são aplicados (e jogos ao vivo aparecem em tempo real). Sem o servidor no ar, o botão usa os resultados oficiais embutidos.
 

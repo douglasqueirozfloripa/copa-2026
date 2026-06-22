@@ -203,7 +203,7 @@ function run(){
   const domG = boot({ "copa2026_state_v1": JSON.stringify({matches:oldM, ko:{}}) });
   const dG = domG.window.document;
   ok(getState(domG.window).matches.filter(m=>m.hs!==null).length === 41,
-     "ao abrir com dados antigos, os resultados oficiais (40 finais + 1 ao vivo) prevalecem e ficam salvos");
+     "ao abrir com dados antigos, os 41 resultados oficiais prevalecem e ficam salvos");
   dG.querySelector('nav button[data-view="matches"]').click();
   { const tp=dG.getElementById('toggle-past'); if(tp) tp.click(); } // expandir datas já realizadas
   ok(dG.querySelector('#matches-body input.sc[data-id="31"]').value === "3", "2ª rodada visível (Brasil x Haiti = 3)");
@@ -229,7 +229,7 @@ function run(){
   console.log("\n== Teste I: limpar o que ainda não aconteceu ==");
   dH.querySelector('nav button[data-view="ranking"]').click();
   dH.getElementById('btn-clear-future').click();
-  ok(stH().matches.filter(m=>m.hs!==null).length === 41, "Limpar deixa só os jogos oficiais (40 finais + 1 ao vivo)");
+  ok(stH().matches.filter(m=>m.hs!==null).length === 41, "Limpar deixa só os 41 jogos oficiais");
   ok((stH().simIds||[]).length === 0, "Limpar remove a marcação de simulados");
   ok(!stH().ko.seed, "Limpar zera o mata-mata");
 
@@ -250,7 +250,7 @@ function run(){
   wK.eval("STATE.matches.forEach(m=>{m.hs=null;m.as=null;}); saveState();");
   ok(getState(wK).matches.filter(m=>m.hs!==null).length === 0, "após limpar tudo, nenhum jogo tem placar");
   wK.eval("refreshOfficial();");
-  ok(getState(wK).matches.filter(m=>m.hs!==null).length === 41, "restaurar dados oficiais traz os jogos (40 encerrados + 1 ao vivo)");
+  ok(getState(wK).matches.filter(m=>m.hs!==null).length === 41, "restaurar dados oficiais traz os 41 jogos encerrados");
   ok(wK.eval("STATE.matches.filter(m=>m.id>=25&&m.id<=40).every(m=>m.hs!==null&&m.as!==null)"),
      "a 2ª rodada (jogos já encerrados) volta completa após restaurar");
   ok(wK.eval("STATE.matches.filter(m=>m.r===1).every(m=>m.hs!==null)"), "a 1ª rodada também volta completa");
@@ -309,7 +309,7 @@ function run(){
   ok(playedP() === 72, "após simular, 72 jogos preenchidos");
   dP.querySelector('nav button[data-view="ko"]').click();
   dP.getElementById('ko-reset').click(); // com simulação: desfaz tudo
-  ok(playedP() === 41, "após 'Limpar palpites' (simulação), volta aos jogos oficiais (40 + 1 ao vivo)");
+  ok(playedP() === 41, "após 'Limpar palpites' (simulação), volta aos 41 jogos oficiais");
   ok(!getState(wP).ko.r32, "chaveamento foi zerado");
   dP.getElementById('ko-seed').click();
   ok(dP.getElementById('modal-bg').classList.contains('show'), "ao gerar agora, o aviso de preencher os jogos aparece");
@@ -375,19 +375,36 @@ function run(){
   ok(dT.querySelectorAll('.theme-grid input[type=color]').length === 6, "editor de cores com 6 variáveis");
   ok(dT.getElementById('preview-frame').style.width === '375px', "pré-visualização inicia no mobile (375px)");
 
-  console.log("\n== Teste U: jogo EM ANDAMENTO (ao vivo) marcado em Jogos & Datas ==");
+  console.log("\n== Teste U: dia 22/06 — Argentina ENCERRADO (2x0) e jogos ainda não iniciados ==");
   const domU = boot(); const dU = domU.window.document, wU = domU.window;
   dU.querySelector('nav button[data-view="matches"]').click();
   { const tp=dU.getElementById('toggle-past'); if(tp) tp.click(); } // garante todas as datas visíveis
-  ok(dU.querySelectorAll('#matches-body .live-strip').length >= 1, "faixa 🔴 AO VIVO aparece acima do jogo em andamento");
-  const argInput = dU.querySelector('#matches-body input.sc[data-id="41"][data-side="hs"]');
-  ok(argInput && argInput.value === "2", "placar parcial da Argentina já vem preenchido");
-  // o jogo ao vivo NÃO entra em 'últimos resultados' do toast
-  const recentTxt = [...dU.querySelectorAll('#toast-body .t-row')].map(r=>r.textContent).join(" ");
-  ok(!/Áustria/.test(recentTxt) || true, "jogo ao vivo não é listado como resultado final no toast");
-  // refreshOfficial mantém o jogo ao vivo
+  // (1) NADA fica fixo como ao vivo: ao abrir/refresh não deve haver faixa AO VIVO (corrige o bug do refresh)
+  ok(dU.querySelectorAll('#matches-body .live-strip').length === 0,
+     "ao abrir/refresh nenhum jogo aparece como ao vivo (estado ao vivo é só dinâmico)");
+  // (2) Argentina x Áustria = 2x0 ENCERRADO
+  const argH = dU.querySelector('#matches-body input.sc[data-id="41"][data-side="hs"]');
+  const argA = dU.querySelector('#matches-body input.sc[data-id="41"][data-side="as"]');
+  ok(argH && argH.value === "2" && argA && argA.value === "0", "Argentina 2x0 Áustria já vem preenchido (encerrado)");
+  ok(wU.eval("STATE.matches.find(m=>m.id===41).hs")===2 && wU.eval("STATE.matches.find(m=>m.id===41).as")===0,
+     "placar final 2x0 do jogo 41 no estado");
+  // (3) jogos do dia 22 que ainda não começaram seguem SEM placar
+  const fra = dU.querySelector('#matches-body input.sc[data-id="42"][data-side="hs"]'); // França x Iraque 18:00
+  const nor = dU.querySelector('#matches-body input.sc[data-id="43"][data-side="hs"]'); // Noruega x Senegal 21:00
+  ok(fra && fra.value === "", "França x Iraque (18:00) ainda não iniciado: sem placar");
+  ok(nor && nor.value === "", "Noruega x Senegal (21:00) ainda não iniciado: sem placar");
+  ok(wU.eval("STATE.matches.find(m=>m.id===42).hs")===null && wU.eval("STATE.matches.find(m=>m.id===43).hs")===null,
+     "jogos 42 e 43 com placar nulo no estado");
+  // (4) refreshOfficial mantém o resultado final e NÃO reintroduz ao vivo
   wU.eval("refreshOfficial();");
-  ok(getState(wU).matches.find(m=>m.id===41).hs===2, "após Atualizar, o parcial do jogo ao vivo permanece");
+  ok(getState(wU).matches.find(m=>m.id===41).hs===2, "após Atualizar, o 2x0 da Argentina permanece");
+  ok(wU.eval("LIVE_IDS.size")===0, "após Atualizar, nenhum jogo volta a ficar ao vivo");
+  // (5) cobertura do AO VIVO DINÂMICO: quando o crawler captura um jogo em andamento, a faixa aparece; ao encerrar, some
+  wU.eval("applyScraped([{home:'Argentina',away:'Áustria',hs:2,as:1,aoVivo:true,encerrado:false,status:\"75'\"}]); renderMatches();");
+  ok(dU.querySelectorAll('#matches-body .live-strip').length === 1, "crawler marcando ao vivo: faixa 🔴 AO VIVO aparece");
+  ok(/75'/.test(dU.querySelector('#matches-body .live-strip').textContent), "faixa mostra o minuto capturado da FIFA (75')");
+  wU.eval("applyScraped([{home:'Argentina',away:'Áustria',hs:2,as:0,aoVivo:false,encerrado:true,status:'FIM'}]); renderMatches();");
+  ok(dU.querySelectorAll('#matches-body .live-strip').length === 0, "ao encerrar (FIM), a faixa ao vivo some");
 
   console.log(`\n==== RESULTADO: ${pass} passaram, ${fail} falharam ====`);
   process.exit(fail>0?1:0);

@@ -467,7 +467,7 @@ const FLAGS = {
   "Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croácia":"🇭🇷","Gana":"🇬🇭","Panamá":"🇵🇦"
 };
 const LAST_UPDATE = "22 de junho de 2026 (fim da 2ª rodada)";
-const DATA_VERSION = 10; // ao atualizar os resultados oficiais embutidos, incrementar este número
+const DATA_VERSION = 13; // ao atualizar os resultados oficiais embutidos, incrementar este número
 // jogos EM ANDAMENTO (placar parcial) — atualizado por mim ao buscar na FIFA
 // "Ao vivo" é 100% DINÂMICO: só aparece quando o crawler (server.js) captura um jogo em andamento.
 // Nada fica fixo aqui — assim um jogo já encerrado (ex.: Argentina 2x0 FIM) NÃO volta a aparecer ao vivo no refresh.
@@ -1180,6 +1180,20 @@ function renderKO(){
   renderToast(); // mantém Próximos/Últimos do toast em sincronia com o mata-mata
   if(wrap) wrap.scrollLeft=_sx; // restaura a rolagem
 }
+// re-renderiza o mata-mata SEM "pular" a tela: ao editar um placar no painel, devolve o foco
+// ao mesmo campo e ancora-o na mesma posição vertical da tela (compensa mudanças de altura).
+function renderKOKeepingFocus(){
+  const a=document.activeElement;
+  const meta=(a&&a.classList&&a.classList.contains("kosc"))
+    ? {k:a.dataset.k,side:a.dataset.side,top:a.getBoundingClientRect().top} : null;
+  renderKO();
+  if(!meta) return;
+  const inp=document.querySelector(`input.kosc[data-k="${meta.k}"][data-side="${meta.side}"]`);
+  if(!inp) return;
+  inp.focus();
+  const delta=inp.getBoundingClientRect().top-meta.top; // quanto o campo se moveu
+  if(delta) window.scrollBy(0,delta);                    // mantém o campo no mesmo ponto da tela
+}
 // painel de RESULTADOS do mata-mata (placares editáveis, como em Jogos & Datas)
 function tieByKey(b,k){ const p=k.split("_"),r=p[0],i=+p[1]; if(r==="final")return b.final; if(r==="third")return b.third; return b[r][i]; }
 function clearDownstreamK(k){ const p=k.split("_"); clearDownstream(p[0],+p[1]); }
@@ -1226,7 +1240,7 @@ function renderKOPanel(){
     const k=e.target.dataset.k, side=e.target.dataset.side;
     STATE.ko.scores=STATE.ko.scores||{}; const cur=STATE.ko.scores[k]||{};
     cur[side]= e.target.value===""?null:Math.max(0,Math.min(99,parseInt(e.target.value)||0));
-    STATE.ko.scores[k]=cur; applyKoScoreWinner(k); saveState(); renderKO();
+    STATE.ko.scores[k]=cur; applyKoScoreWinner(k); saveState(); renderKOKeepingFocus();
   }));
   el.querySelectorAll(".penbtn").forEach(btn=>btn.addEventListener("click",e=>{
     const k=e.currentTarget.dataset.k, team=e.currentTarget.dataset.team;
@@ -1472,7 +1486,7 @@ const SCRAPE_URL=((location.protocol==="http:"||location.protocol==="https:")?""
 let livePollTimer=null;
 const _norm=s=>(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
 // nomes da FIFA -> nomes usados no app
-const FIFA2APP={"republica da coreia":"Coreia do Sul","tchequia":"República Tcheca","bosnia e herzegovina":"Bósnia-Herzegovina","eua":"Estados Unidos","holanda":"Países Baixos","ri do ira":"Irã","turkiye":"Turquia","rd do congo":"RD Congo"};
+const FIFA2APP={"republica da coreia":"Coreia do Sul","tchequia":"República Tcheca","bosnia e herzegovina":"Bósnia-Herzegovina","eua":"Estados Unidos","holanda":"Países Baixos","ri do ira":"Irã","turkiye":"Turquia","rd do congo":"RD Congo","curacau":"Curaçao"};
 function findMatchByNames(homeF,awayF){
   const h=_norm(FIFA2APP[_norm(homeF)]||homeF), a=_norm(FIFA2APP[_norm(awayF)]||awayF);
   return STATE.matches.find(m=>_norm(m.home)===h&&_norm(m.away)===a);
