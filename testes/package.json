@@ -1,0 +1,17 @@
+{
+  "name": "copa-2026-testes",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:unit": "node unit.js",
+    "test:jsdom": "node run-jsdom.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed --workers=1",
+    "test:simulador": "playwright test -g \"simulador\" --headed --workers=1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "jsdom": "^25.0.0"
+  }
+}

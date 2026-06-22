@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copa do Mundo 2026 — Resultados, Tabela e Simulador</title>
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#121a33; --card:#16203d; --card2:#1d2a4d;
+    --line:#28365e; --txt:#eaf0ff; --muted:#9fb0d6; --accent:#22c55e;
+    --accent2:#38bdf8; --gold:#fbbf24; --red:#f87171; --win:#1f7a3f;
+  }
+  /* modo claro (clean) — paleta de alto contraste */
+  html.clean{--bg:#eef2f9;--bg2:#e4ebf6;--card:#ffffff;--card2:#eef3fb;--line:#c4d1e6;
+    --txt:#0e1b33;--muted:#45536f;--accent:#15803d;--accent2:#1d4ed8;--gold:#9a5800;--red:#c81e1e;--win:#15803d}
+  html.clean body{background:linear-gradient(160deg,#eef2f9,#dbe4f2)}
+  /* clareia as faixas translúcidas (que eram escuras fixas) */
+  html.clean header,html.clean nav,html.clean .watch-bar{background:rgba(255,255,255,.85)}
+  /* texto branco sobre verde para contraste em botões/abas ativas */
+  html.clean nav button.active{color:#fff}
+  html.clean .btn.green{color:#fff}
+  html.clean #btn-atualizar:hover,html.clean #btn-atualizar-2:hover{color:#fff}
+  html.clean .champion .name{color:#fff}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:linear-gradient(160deg,var(--bg),#070b16);color:var(--txt);min-height:100vh}
+  header{padding:18px 16px 10px;text-align:center;border-bottom:1px solid var(--line);
+    background:rgba(11,16,32,.6);position:sticky;top:0;z-index:20;backdrop-filter:blur(8px)}
+  header h1{margin:0;font-size:20px;letter-spacing:.3px}
+  header p{margin:4px 0 0;color:var(--muted);font-size:12px}
+  .lang-wrap{position:absolute;top:12px;right:14px;display:flex;align-items:center;gap:5px}
+  .lang-wrap .globe{font-size:14px}
+  #lang-select{background:var(--card);color:var(--txt);border:1px solid var(--line);
+    border-radius:8px;padding:5px 8px;font-size:12px;cursor:pointer;max-width:150px}
+  .mode-btn{background:var(--card);border:1px solid var(--line);border-radius:8px;cursor:pointer;
+    font-size:13px;padding:4px 8px;line-height:1}
+  /* Estúdio */
+  .studio-sizes{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .studio-sizes .btn.on{background:var(--accent);color:#06210f;border-color:var(--accent)}
+  .preview-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg2);padding:12px;text-align:center}
+  #preview-frame{border:1px solid var(--line);border-radius:8px;background:#fff;max-width:100%;height:560px;transition:width .2s}
+  .theme-grid{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0}
+  .theme-grid label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);align-items:center}
+  .theme-grid input[type=color]{width:42px;height:30px;border:1px solid var(--line);border-radius:6px;background:none;cursor:pointer}
+  .studio-explain h4{color:var(--accent2);margin:14px 0 4px;font-size:13px}
+  .studio-explain p,.studio-explain li{font-size:12.5px;color:var(--muted);line-height:1.55}
+  .studio-explain code{background:var(--bg2);padding:1px 5px;border-radius:4px;color:var(--txt);font-size:11.5px}
+  .studio-explain ul{margin:4px 0 4px 18px}
+  html[dir="rtl"] .lang-wrap{right:auto;left:14px}
+  html[dir="rtl"] .match .t-home{text-align:left}
+  html[dir="rtl"] .match .t-away{text-align:right}
+  html[dir="rtl"] td.team{text-align:right}
+  @media(max-width:640px){.lang-wrap{position:static;justify-content:center;margin-bottom:8px}}
+  .watch-bar{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+    padding:8px 12px;border-bottom:1px solid var(--line);background:rgba(11,16,32,.4);font-size:12px}
+  .watch-bar .wl{color:var(--muted);font-weight:600}
+  .watch-bar .ch{background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:3px 10px;color:var(--txt);font-weight:600}
+  nav{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:10px;position:sticky;
+    top:62px;z-index:19;background:rgba(11,16,32,.6);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  nav button{background:var(--card);color:var(--muted);border:1px solid var(--line);
+    padding:8px 14px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600;transition:.15s}
+  nav button:hover{color:var(--txt);border-color:var(--accent2)}
+  nav button.active{background:var(--accent);color:#06210f;border-color:var(--accent)}
+  main{max-width:1080px;margin:0 auto;padding:16px}
+  .view{display:none}
+  .view.active{display:block;animation:fade .2s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  h2.section{font-size:16px;margin:6px 0 14px;color:var(--accent2)}
+  .muted{color:var(--muted)}
+  .note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);
+    padding:10px 12px;border-radius:8px;font-size:13px;color:var(--muted);margin-bottom:16px}
+  .updatebar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px}
+  .updatebar .ok{color:var(--accent)}
+  .user-stamp{color:var(--muted);font-size:11px;margin-top:3px}
+  .pwr-leaders{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .pwr-lead{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:12.5px}
+  .sim-badge{background:var(--accent2);color:#04212e;font-size:9px;font-weight:800;border-radius:4px;padding:1px 5px;text-transform:uppercase;letter-spacing:.3px}
+  .match .live-strip{grid-column:1/-1;justify-self:start;display:inline-flex;align-items:center;gap:5px;
+    background:var(--red);color:#fff;font-size:9.5px;font-weight:800;border-radius:6px;padding:2px 8px;
+    text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;animation:livepulse 1.2s infinite}
+  @keyframes livepulse{0%,100%{opacity:1}50%{opacity:.55}}
+  .match .live-watch{grid-column:1/-1;font-size:11px;color:var(--muted);margin-bottom:6px}
+  .match.sim .meta{opacity:.95}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--card2);border:1px solid var(--line);border-radius:14px;max-width:440px;padding:20px;font-size:14px;line-height:1.5}
+  .modal h3{margin:0 0 10px;font-size:16px;color:var(--accent2)}
+  .modal p{margin:0 0 10px;color:var(--txt)}
+  .modal .muted{color:var(--muted);font-size:12.5px}
+  .modal button{margin-top:6px}
+
+  /* Standings */
+  .group{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden}
+  .group h3{margin:0;padding:11px 14px;background:var(--card2);font-size:14px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  td.team{text-align:left;font-weight:600;white-space:nowrap}
+  td.pts{font-weight:800;color:var(--accent)}
+  tr.q1 td:first-child,tr.q2 td:first-child{border-left:3px solid var(--accent)}
+  tr.q3 td:first-child{border-left:3px solid var(--gold)}
+  .pos{display:inline-block;width:18px;color:var(--muted)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:14px}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .dot{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+  /* Matches */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  select,.btn{background:var(--card);color:var(--txt);border:1px solid var(--line);
+    border-radius:8px;padding:8px 10px;font-size:13px;cursor:pointer}
+  .btn{font-weight:600}
+  .btn.green{background:var(--accent);color:#06210f;border-color:var(--accent)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.4)}
+  /* botão Atualizar: estilo contorno/pílula discreto */
+  #btn-atualizar,#btn-atualizar-2{background:transparent;color:var(--accent);border:1px solid var(--accent);
+    border-radius:999px;padding:7px 15px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:.15s;box-shadow:none}
+  #btn-atualizar:hover,#btn-atualizar-2:hover{background:var(--accent);color:#06210f}
+  #btn-atualizar:active,#btn-atualizar-2:active{transform:translateY(1px)}
+  .btn.danger{background:transparent;color:var(--red);border-color:var(--red)}
+  .show-past-bar{margin-bottom:14px}
+  .show-past-bar .btn{width:100%;text-align:center;color:var(--muted);border-style:dashed;font-weight:600}
+  .show-past-bar .btn:hover{color:var(--txt);border-color:var(--accent2)}
+  .daygroup.past h4{opacity:.75}
+  .daygroup{margin-bottom:18px}
+  .daygroup h4{font-size:13px;color:var(--accent2);margin:0 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  .match{display:grid;grid-template-columns:74px 1fr auto 1fr 30px;align-items:center;gap:8px;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:7px}
+  .match .meta{font-size:11px;color:var(--muted);line-height:1.3}
+  .match .t-home{text-align:right;font-weight:600}
+  .match .t-away{text-align:left;font-weight:600}
+  .match .score{display:flex;align-items:center;gap:4px}
+  .match input.sc{width:34px;text-align:center;background:var(--bg2);color:var(--txt);
+    border:1px solid var(--line);border-radius:6px;padding:6px 2px;font-size:15px;font-weight:700}
+  .match input.sc:focus{outline:none;border-color:var(--accent2)}
+  /* remove as setinhas padrão do input number */
+  .match input.sc::-webkit-outer-spin-button,
+  .match input.sc::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .match input.sc{-moz-appearance:textfield;appearance:textfield}
+  .match .x{color:var(--muted);font-size:12px}
+  .grp-badge{font-size:10px;color:var(--gold);font-weight:700}
+  .played{opacity:.95}
+  .flag{font-size:15px;margin:0 3px;vertical-align:-1px}
+  .flag-img{width:21px;height:14px;object-fit:cover;border-radius:2px;margin:0 5px;
+    vertical-align:-2px;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
+
+  /* Bracket */
+  .ko-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .bracket-wrap{overflow-x:auto;padding-bottom:12px}
+  .bracket{display:flex;gap:18px;min-width:900px}
+  .round{display:flex;flex-direction:column;justify-content:space-around;flex:1;gap:8px}
+  .round h5{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent2);text-align:center;margin:0 0 4px}
+  .round h5 .rdate,.rdate{font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0}
+  .tie{background:var(--card);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .slot{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;font-size:12.5px;
+    cursor:pointer;border-bottom:1px solid var(--line);transition:.12s}
+  .slot:last-child{border-bottom:none}
+  .slot:hover{background:var(--card2)}
+  .slot.win{background:var(--win);color:#fff;font-weight:700}
+  .slot.empty{color:var(--muted);cursor:default;font-style:italic}
+  .slot .seed{color:var(--muted);font-size:10px;margin-left:6px;font-weight:400}
+  .slot.win .seed{color:#cfeede}
+  /* seleções da repescagem (melhores 3ºs) */
+  .slot.third-q{border-left:3px solid var(--gold);background:linear-gradient(90deg,rgba(251,191,36,.10),transparent 60%)}
+  .slot.third-q.win{background:var(--win)}
+  .slot .badge3{background:var(--gold);color:#3b2f08;font-size:9px;font-weight:800;border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+  .champion{margin-top:16px;text-align:center;background:linear-gradient(135deg,#3b2f08,#1d2a4d);
+    border:1px solid var(--gold);border-radius:12px;padding:16px}
+  .champion .lbl{font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:1px}
+  .champion .name{font-size:24px;font-weight:800;margin-top:4px}
+  .ko-panel{margin-top:22px}
+  .ko-panel-title{font-size:15px;color:var(--accent2);margin:0 0 12px;border-top:1px solid var(--line);padding-top:16px}
+  .ko-match{display:flex!important;align-items:center;gap:10px;flex-wrap:wrap}
+  .ko-match .t-home{flex:1;text-align:right;min-width:0}
+  .ko-match .t-away{flex:1;text-align:left;min-width:0}
+  .ko-match .score{flex:0 0 auto}
+  .ko-match .t-home.kowin,.ko-match .t-away.kowin{color:var(--accent)}
+  .ko-match .pen-row{flex-basis:100%;display:flex;gap:6px;align-items:center;justify-content:center;
+    font-size:11px;color:var(--muted);margin-top:4px;flex-wrap:wrap}
+  .ko-match .penbtn{background:var(--bg2);border:1px solid var(--line);color:var(--txt);border-radius:999px;
+    padding:3px 10px;font-size:11px;cursor:pointer}
+  .ko-match .penbtn.on{background:var(--accent);color:#06210f;border-color:var(--accent);font-weight:700}
+  .third-final{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px}
+  .third-final .tie{flex:1;min-width:240px}
+  /* Toast de jogos */
+  .toast{position:fixed;right:16px;bottom:16px;width:360px;max-width:calc(100vw - 24px);z-index:40;
+    background:var(--card2);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.5);overflow:hidden;font-size:12.5px}
+  .toast .t-head{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    background:var(--card);padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+  .toast .t-head b{font-size:13px;white-space:nowrap}
+  .toast .t-body{padding:6px 12px 10px;max-height:46vh;overflow:auto}
+  /* minimizado: apenas uma bolinha no canto */
+  .toast.min{width:52px;height:52px;border-radius:50%;box-shadow:0 6px 22px rgba(0,0,0,.55)}
+  .toast.min .t-head{height:100%;padding:0;justify-content:center;border-bottom:none;
+    background:var(--accent);border-radius:50%}
+  .toast.min #toast-title,.toast.min .t-min-btn{display:none}
+  .toast.min #toast-icon{font-size:24px;filter:grayscale(0)}
+  .toast.min .t-body{display:none}
+  .toast .t-sec{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent2);margin:9px 0 4px}
+  .toast .t-row{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);line-height:1.3}
+  .toast .t-row:last-child{border-bottom:none}
+  .toast .t-row .nm{display:block}
+  .toast .t-row .sc{font-weight:800;color:var(--accent);white-space:nowrap;margin:0 2px}
+  .toast .t-row .dt{color:var(--muted);font-size:10px;white-space:nowrap}
+  html[dir="rtl"] .toast .t-row{align-items:flex-end}
+  .toast .t-min-btn{background:none;border:1px solid var(--line);border-radius:6px;color:var(--muted);cursor:pointer;font-size:12px;line-height:1;padding:3px 7px}
+  html[dir="rtl"] .toast{right:auto;left:16px}
+  @media(max-width:640px){.toast{width:240px}}
+  .donate{max-width:420px;margin:18px auto 0;text-align:center;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;padding:20px 18px}
+  .donate h3{margin:0 0 4px;font-size:17px}
+  .donate p{margin:2px 0}
+  .donate #pix-qr{display:block;margin:12px auto 6px;background:#fff;border-radius:10px;padding:8px;width:200px;height:200px;object-fit:contain}
+  .donate .dn-hint{color:var(--muted);font-size:12px;margin-bottom:10px}
+  .donate .pix-info{font-size:13px;line-height:1.5;margin:8px 0}
+  .donate .pix-cc{display:flex;gap:6px;margin:10px 0 4px}
+  .donate .pix-cc input{flex:1;min-width:0;background:var(--bg2);color:var(--muted);border:1px solid var(--line);
+    border-radius:8px;padding:8px;font-size:11px;font-family:monospace}
+  .donate .proj-link{display:inline-block;margin-top:10px;color:var(--accent2);font-weight:600;font-size:13px;text-decoration:none}
+  .donate .proj-link:hover{text-decoration:underline}
+  .donate .dn-transp{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:10.5px;line-height:1.5;text-align:left}
+  footer{text-align:center;color:var(--muted);font-size:11px;padding:24px 16px;margin-bottom:90px}
+  @media(max-width:640px){
+    .match{grid-template-columns:60px 1fr auto 1fr;grid-template-rows:auto auto}
+    .match .meta{grid-column:1/-1}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="lang-wrap">
+    <button id="mode-toggle" class="mode-btn" title="Tema claro/escuro" aria-label="Tema">🌙</button>
+    <span class="globe">🌐</span><select id="lang-select" aria-label="Idioma / Language"></select>
+  </div>
+  <h1>🏆 <span data-i18n="title">Copa do Mundo 2026</span></h1>
+  <p data-i18n="subtitle">EUA · Canadá · México — Resultados, classificação e simulador · Horários de Brasília</p>
+</header>
+<div class="watch-bar">
+  <span class="wl" data-i18n="watch_label">📺 Onde assistir (Brasil):</span>
+  <span class="ch">Globo</span><span class="ch">SBT</span><span class="ch">sportv</span><span class="ch">Cazé TV</span><span class="ch">Globoplay</span><span class="ch">N Sports</span><span class="ch">GE TV</span>
+</div>
+<nav>
+  <button data-view="standings" data-i18n="nav_standings" class="active">📊 Classificação</button>
+  <button data-view="matches" data-i18n="nav_matches">📅 Jogos &amp; Datas</button>
+  <button data-view="ko" data-i18n="nav_ko">🔮 Simulador (Mata-mata)</button>
+  <button data-view="ranking" data-i18n="nav_ranking">🏅 Ranking FIFA</button>
+  <button data-view="stats" data-i18n="nav_stats">📈 Estatísticas</button>
+  <button data-view="studio" data-i18n="nav_studio">🎓 Estúdio</button>
+</nav>
+<main>
+  <!-- STANDINGS -->
+  <section id="standings" class="view active">
+    <h2 class="section" data-i18n="standings_title">Classificação dos 12 grupos</h2>
+    <div class="updatebar">
+      <div>
+        <div><span class="ok">●</span> <span data-i18n="updated_until">Resultados oficiais (fonte FIFA) preenchidos até:</span> <b>22/06/2026</b></div>
+        <div class="user-stamp" id="user-update-2"></div>
+      </div>
+      <button class="btn green" id="btn-atualizar-2"><svg class="ic" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg><span data-i18n="btn_update">Atualizar resultados</span></button>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--accent)"></i> <span data-i18n="legend_q12">1º e 2º — classificados</span></span>
+      <span><i class="dot" style="background:var(--gold)"></i> <span data-i18n="legend_q3">3º — pode avançar (8 melhores)</span></span>
+      <span class="muted" data-i18n="legend_crit">Critérios: Pontos · Saldo · Gols pró</span>
+    </div>
+    <div id="standings-body"></div>
+  </section>
+
+  <!-- MATCHES -->
+  <section id="matches" class="view">
+    <h2 class="section" data-i18n="matches_title">Jogos &amp; Datas</h2>
+    <div class="updatebar">
+      <div>
+        <div><span class="ok">●</span> <span data-i18n="updated_until">Resultados oficiais (fonte FIFA) preenchidos até:</span> <b id="last-update">—</b></div>
+        <div class="user-stamp" id="user-update"></div>
+      </div>
+      <button class="btn green" id="btn-atualizar"><svg class="ic" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg><span data-i18n="btn_update">Atualizar resultados</span></button>
+    </div>
+    <div class="note" data-i18n="note_matches">Os placares dos jogos já realizados vêm preenchidos com os resultados oficiais.
+      Edite qualquer placar para corrigir ou simular — tudo é salvo automaticamente no seu navegador (localStorage).</div>
+    <div class="filters">
+      <select id="f-round"></select>
+      <select id="f-group"></select>
+      <select id="f-team"></select>
+      <button class="btn danger" id="clear-round" data-i18n="clear_future">🧹 Limpar o que ainda não aconteceu</button>
+    </div>
+    <div id="matches-body"></div>
+  </section>
+
+  <!-- KNOCKOUT -->
+  <section id="ko" class="view">
+    <h2 class="section" data-i18n="ko_title">Simulador do mata-mata</h2>
+    <div class="note" id="ko-note"></div>
+    <div class="ko-actions">
+      <button class="btn green" id="ko-seed" data-i18n="ko_seed">⚙️ Gerar chaveamento a partir da classificação</button>
+      <button class="btn green" id="ko-sim" data-i18n="ko_sim_bracket">🎲 Simular mata-mata</button>
+      <button class="btn danger" id="ko-reset" data-i18n="ko_reset">Limpar palpites do mata-mata</button>
+      <span class="muted" style="font-size:12px" data-i18n="ko_click">Clique numa seleção para fazê-la avançar.</span>
+    </div>
+    <div class="legend" style="margin-bottom:12px">
+      <span><i class="dot" style="background:var(--gold)"></i> <span class="badge3" style="margin:0 4px 0 0">3º</span> <span data-i18n="ko_third_legend">Repescagem — melhores 3ºs colocados</span></span>
+    </div>
+    <div class="bracket-wrap"><div class="bracket" id="bracket"></div></div>
+    <div class="third-final" id="third-final"></div>
+    <div id="champion-box"></div>
+    <div id="ko-matches" class="ko-panel"></div>
+  </section>
+
+  <!-- RANKING FIFA -->
+  <section id="ranking" class="view">
+    <h2 class="section" data-i18n="ranking_title">Ranking FIFA das seleções</h2>
+    <div class="note" data-i18n="ranking_sub">Ranking aproximado das 48 seleções, usado como base para a simulação.</div>
+    <div class="ko-actions">
+      <button class="btn green" id="btn-simular" data-i18n="btn_simulate">🎲 Simular jogos restantes</button>
+      <button class="btn danger" id="btn-clear-future" data-i18n="clear_future">🧹 Limpar o que ainda não aconteceu</button>
+    </div>
+    <div id="ranking-body"></div>
+  </section>
+
+  <!-- ESTATÍSTICAS -->
+  <section id="stats" class="view">
+    <h2 class="section" data-i18n="nav_stats">📈 Estatísticas</h2>
+    <div class="updatebar">
+      <div><span class="ok">●</span> <span data-i18n="updated_until">Resultados oficiais (fonte FIFA) preenchidos até:</span> <b>21/06/2026</b></div>
+      <button class="btn green" id="btn-atualizar-stats"><svg class="ic" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg><span data-i18n="btn_update">Atualizar resultados</span></button>
+    </div>
+    <div class="note" data-i18n="st_note">Estatísticas oficiais da FIFA, atualizadas até a 2ª rodada (21/06/2026).</div>
+    <div id="stats-body"></div>
+  </section>
+
+  <!-- ESTÚDIO (painel didático) -->
+  <section id="studio" class="view">
+    <h2 class="section">🎓 Estúdio — entenda e edite o visual da página</h2>
+
+    <div class="group" style="padding:14px;margin-bottom:16px">
+      <h3>📱 Ver em diferentes telas (responsividade)</h3>
+      <p class="muted" style="font-size:12.5px;margin:4px 0">Escolha um tamanho para ver a aplicação inteira reagindo ao espaço disponível (a mesma página, em outra largura):</p>
+      <div class="studio-sizes" id="studio-sizes">
+        <button class="btn" data-w="375">📱 Mobile (375px)</button>
+        <button class="btn" data-w="768">📲 Tablet (768px)</button>
+        <button class="btn" data-w="1280">💻 Desktop (1280px)</button>
+        <button class="btn" data-w="1600">🖥️ Desktop grande (1600px)</button>
+      </div>
+      <div class="preview-wrap"><iframe id="preview-frame" title="Pré-visualização responsiva"></iframe></div>
+    </div>
+
+    <div class="group" style="padding:14px;margin-bottom:16px">
+      <h3>🎨 Mude as cores e a fonte (ao vivo)</h3>
+      <div class="theme-grid">
+        <label>Destaque<input type="color" data-var="--accent"></label>
+        <label>Destaque 2<input type="color" data-var="--accent2"></label>
+        <label>Fundo<input type="color" data-var="--bg"></label>
+        <label>Cartão<input type="color" data-var="--card"></label>
+        <label>Texto<input type="color" data-var="--txt"></label>
+        <label>Dourado<input type="color" data-var="--gold"></label>
+      </div>
+      <label style="font-size:12.5px">Fonte:
+        <select id="font-sel">
+          <option value="">Padrão (Segoe UI / sistema)</option>
+          <option value="Georgia, serif">Georgia (serifada)</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="'Courier New', monospace">Courier (monoespaçada)</option>
+          <option value="Verdana, sans-serif">Verdana</option>
+          <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+        </select>
+      </label>
+      <div style="margin-top:10px"><button class="btn danger" id="theme-reset">↺ Restaurar padrão</button></div>
+      <p class="muted" style="font-size:11.5px;margin-top:8px">Dica: no cabeçalho há o botão 🌙/☀️ para alternar entre modo escuro e <b>modo clean</b> (claro).</p>
+    </div>
+
+    <div class="group" style="padding:14px">
+      <h3>🧱 Como a página é montada (HTML, CSS e JS)</h3>
+      <div class="studio-explain">
+        <h4>Estrutura HTML (as “caixas” &lt;div&gt;)</h4>
+        <p>A página é dividida em blocos: <code>&lt;header&gt;</code> (título, idioma e tema) → barra <code>.watch-bar</code> (onde assistir) → <code>&lt;nav&gt;</code> (as abas) → <code>&lt;main&gt;</code> com uma <code>&lt;section&gt;</code> para cada aba (Classificação, Jogos, Simulador, Ranking, Estatísticas, Estúdio) → <code>.toast</code> (canto) → seção de doação → <code>&lt;footer&gt;</code>.</p>
+        <h4>Posicionamento (CSS)</h4>
+        <ul>
+          <li><code>position: sticky</code> no <code>header</code> e na <code>nav</code> — eles “grudam” no topo ao rolar.</li>
+          <li><code>display: flex</code> com <code>flex-wrap</code> na nav e nas listas — os itens se reorganizam e quebram linha em telas menores.</li>
+          <li><code>display: grid</code> nos jogos (<code>.match</code>) — alinha hora, times e placar em colunas.</li>
+          <li>O chaveamento usa <code>flex</code> em colunas (<code>.bracket &gt; .round</code>) com <code>overflow-x</code> para rolar na horizontal.</li>
+          <li><code>position: fixed</code> no <code>.toast</code> (fica preso no canto inferior direito).</li>
+          <li><code>@media (max-width: 640px)</code> — regras que só valem em telas pequenas (responsividade). É o que o preview acima demonstra.</li>
+        </ul>
+        <h4>Cores e fonte (CSS variables)</h4>
+        <p>As cores ficam em variáveis no <code>:root</code> (ex.: <code>--accent</code>, <code>--bg</code>, <code>--card</code>). Mudar uma variável muda a página inteira — é o que os controles de cor acima fazem. O modo clean troca esse conjunto de variáveis por tons claros.</p>
+        <h4>O que o JavaScript de cada botão faz</h4>
+        <ul>
+          <li><b>Atualizar resultados</b>: aplica os placares oficiais embutidos e recalcula a classificação (<code>refreshOfficial()</code>).</li>
+          <li><b>Simular jogos restantes</b>: preenche por ranking os jogos sem placar e monta o mata-mata (<code>simulate()</code>).</li>
+          <li><b>Gerar chaveamento</b>: confere se a fase de grupos está completa; se sim, monta o chaveamento oficial da FIFA (<code>seedBracket()</code>).</li>
+          <li><b>Simular mata-mata</b>: avança os confrontos ainda indefinidos pelo ranking (<code>autoAdvanceKO()</code>).</li>
+          <li><b>Limpar palpites / Limpar o que não aconteceu</b>: zera o chaveamento e/ou os resultados simulados (<code>clearUnplayed()</code>).</li>
+          <li><b>Idioma</b>: troca os textos e converte os horários para o fuso do país (<code>applyI18n()</code>).</li>
+          <li><b>Ver mais datas</b>: mostra/oculta as datas que já passaram na lista de jogos.</li>
+          <li><b>Copiar código Pix</b>: copia o código de doação para a área de transferência.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h3 data-i18n="btn_update">🔄 Atualizar resultados</h3>
+    <p id="modal-text"></p>
+    <p class="muted" id="modal-note" data-i18n-html="modal_body">Este app funciona <b>offline</b> e roda direto do arquivo no seu computador. Por segurança, o navegador não deixa um arquivo local buscar dados ao vivo da FIFA sozinho. Por isso a atualização é feita por mim (Claude): é só me pedir <i>"atualize os resultados da Copa"</i> que eu busco os jogos novos e regravo o app — ou posso deixar isso automático todo dia.</p>
+    <button class="btn green" id="modal-ok" data-i18n="modal_ok">Entendi</button>
+  </div>
+</div>
+<div id="toast" class="toast">
+  <div class="t-head" id="toast-head">
+    <b><span id="toast-icon">⚽</span> <span id="toast-title">Jogos</span></b>
+    <button class="t-min-btn" id="toast-min" aria-label="min">▁</button>
+  </div>
+  <div class="t-body" id="toast-body"></div>
+</div>
+<section class="donate" id="donate">
+  <h3 data-i18n="donate_title">❤️ Apoie o projeto</h3>
+  <p class="muted" data-i18n="donate_sub">Doe via Pix ao Projeto Social Garapuvu</p>
+  <img id="pix-qr" alt="QR Code Pix" width="200" height="200">
+  <p class="dn-hint" data-i18n="donate_hint">Aponte a câmera do seu banco para o QR Code</p>
+  <div class="pix-info">
+    <div><b>Pix (CPF):</b> 08087585941</div>
+    <div><b>Projeto Social Garapuvu</b> — instrutor Douglas</div>
+  </div>
+  <div class="pix-cc">
+    <input id="pix-code" readonly aria-label="Pix copia e cola">
+    <button class="btn green" id="pix-copy" data-i18n="pix_copy">Copiar código Pix</button>
+  </div>
+  <a href="https://projeto-garapuvu.web.app/" target="_blank" rel="noopener" class="proj-link" data-i18n="project_link">🔗 Site do projeto</a>
+  <p class="dn-transp" data-i18n="donate_transparency"></p>
+</section>
+<footer>
+  <span data-i18n="footer_main">App da Copa 2026 · funciona offline em Mac e Windows (basta abrir no navegador) · dados salvos localmente no seu computador.</span><br>
+  <span data-i18n="footer_source">Fonte oficial dos resultados:</span> <a href="https://www.fifa.com/pt/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures" target="_blank" rel="noopener" style="color:var(--accent2)">FIFA.com — Copa do Mundo 2026</a>
+</footer>
+
+<script>
+/* ============================================================
+   DADOS BASE — grupos, calendário e resultados oficiais (1ª rodada)
+   ============================================================ */
+const FLAGS = {
+  "México":"🇲🇽","África do Sul":"🇿🇦","Coreia do Sul":"🇰🇷","República Tcheca":"🇨🇿",
+  "Canadá":"🇨🇦","Bósnia-Herzegovina":"🇧🇦","Catar":"🇶🇦","Suíça":"🇨🇭",
+  "Brasil":"🇧🇷","Marrocos":"🇲🇦","Haiti":"🇭🇹","Escócia":"🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+  "Estados Unidos":"🇺🇸","Paraguai":"🇵🇾","Austrália":"🇦🇺","Turquia":"🇹🇷",
+  "Alemanha":"🇩🇪","Curaçao":"🇨🇼","Costa do Marfim":"🇨🇮","Equador":"🇪🇨",
+  "Países Baixos":"🇳🇱","Japão":"🇯🇵","Suécia":"🇸🇪","Tunísia":"🇹🇳",
+  "Bélgica":"🇧🇪","Egito":"🇪🇬","Irã":"🇮🇷","Nova Zelândia":"🇳🇿",
+  "Espanha":"🇪🇸","Cabo Verde":"🇨🇻","Arábia Saudita":"🇸🇦","Uruguai":"🇺🇾",
+  "França":"🇫🇷","Senegal":"🇸🇳","Iraque":"🇮🇶","Noruega":"🇳🇴",
+  "Argentina":"🇦🇷","Argélia":"🇩🇿","Áustria":"🇦🇹","Jordânia":"🇯🇴",
+  "Portugal":"🇵🇹","RD Congo":"🇨🇩","Uzbequistão":"🇺🇿","Colômbia":"🇨🇴",
+  "Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croácia":"🇭🇷","Gana":"🇬🇭","Panamá":"🇵🇦"
+};
+const LAST_UPDATE = "22 de junho de 2026 (fim da 2ª rodada)";
+const DATA_VERSION = 4; // ao atualizar os resultados oficiais embutidos, incrementar este número
+// jogos EM ANDAMENTO (placar parcial) — atualizado por mim ao buscar na FIFA
+const LIVE_IDS = new Set([41]);            // Argentina x Áustria
+// minuto REAL ancorado no valor da FIFA: {m: minuto, h: "1T"|"2T"|"INT", at: instante (ms) em que esse minuto valia}
+// o relógio do app "anda" a partir daí, então fica em tempo real e bate com a FIFA. Atualizado pela rotina automática.
+const LIVE_INFO = {41:{m:61,h:"2T",at:Date.parse("2026-06-22T18:16:00Z")}};
+const CHANNELS = ["Globo","SBT","sportv","Cazé TV","Globoplay","N Sports","GE TV"]; // transmissão (Brasil)
+// Códigos FIFA p/ bandeiras oficiais: https://api.fifa.com/api/v3/picture/flags-sq-1/{CODE}
+const CODES = {
+  "México":"MEX","África do Sul":"RSA","Coreia do Sul":"KOR","República Tcheca":"CZE",
+  "Canadá":"CAN","Bósnia-Herzegovina":"BIH","Catar":"QAT","Suíça":"SUI",
+  "Brasil":"BRA","Marrocos":"MAR","Haiti":"HAI","Escócia":"SCO",
+  "Estados Unidos":"USA","Paraguai":"PAR","Austrália":"AUS","Turquia":"TUR",
+  "Alemanha":"GER","Curaçao":"CUW","Costa do Marfim":"CIV","Equador":"ECU",
+  "Países Baixos":"NED","Japão":"JPN","Suécia":"SWE","Tunísia":"TUN",
+  "Bélgica":"BEL","Egito":"EGY","Irã":"IRN","Nova Zelândia":"NZL",
+  "Espanha":"ESP","Cabo Verde":"CPV","Arábia Saudita":"KSA","Uruguai":"URU",
+  "França":"FRA","Senegal":"SEN","Iraque":"IRQ","Noruega":"NOR",
+  "Argentina":"ARG","Argélia":"ALG","Áustria":"AUT","Jordânia":"JOR",
+  "Portugal":"POR","RD Congo":"COD","Uzbequistão":"UZB","Colômbia":"COL",
+  "Inglaterra":"ENG","Croácia":"CRO","Gana":"GHA","Panamá":"PAN"
+};
+const GROUPS = {
+  A:["México","África do Sul","Coreia do Sul","República Tcheca"],
+  B:["Canadá","Bósnia-Herzegovina","Catar","Suíça"],
+  C:["Brasil","Marrocos","Haiti","Escócia"],
+  D:["Estados Unidos","Paraguai","Austrália","Turquia"],
+  E:["Alemanha","Curaçao","Costa do Marfim","Equador"],
+  F:["Países Baixos","Japão","Suécia","Tunísia"],
+  G:["Bélgica","Egito","Irã","Nova Zelândia"],
+  H:["Espanha","Cabo Verde","Arábia Saudita","Uruguai"],
+  I:["França","Senegal","Iraque","Noruega"],
+  J:["Argentina","Argélia","Áustria","Jordânia"],
+  K:["Portugal","RD Congo","Uzbequistão","Colômbia"],
+  L:["Inglaterra","Croácia","Gana","Panamá"]
+};
+// m(id, rodada, grupo, data ISO, hora BRT, cidade, casa, fora, golsCasa, golsFora)
+function m(id,r,g,d,h,c,home,away,hs,as){return {id,r,g,d,h,c,home,away,hs:hs??null,as:as??null};}
+const BASE_MATCHES = [
+  // 1ª RODADA — resultados oficiais
+  m(1,1,"A","2026-06-11","16:00","Cidade do México","México","África do Sul",2,0),
+  m(2,1,"A","2026-06-11","23:00","Guadalajara","Coreia do Sul","República Tcheca",2,1),
+  m(3,1,"B","2026-06-12","16:00","Toronto","Canadá","Bósnia-Herzegovina",1,1),
+  m(4,1,"D","2026-06-12","22:00","Los Angeles","Estados Unidos","Paraguai",4,1),
+  m(5,1,"B","2026-06-13","16:00","San Francisco","Catar","Suíça",1,1),
+  m(6,1,"C","2026-06-13","19:00","Nova York/NJ","Brasil","Marrocos",1,1),
+  m(7,1,"C","2026-06-13","22:00","Boston","Haiti","Escócia",0,1),
+  m(8,1,"D","2026-06-14","01:00","Vancouver","Austrália","Turquia",2,0),
+  m(9,1,"E","2026-06-14","14:00","Houston","Alemanha","Curaçao",7,1),
+  m(10,1,"F","2026-06-14","17:00","Dallas","Países Baixos","Japão",2,2),
+  m(11,1,"E","2026-06-14","20:00","Philadelphia","Costa do Marfim","Equador",1,0),
+  m(12,1,"F","2026-06-14","23:00","Monterrey","Suécia","Tunísia",5,1),
+  m(13,1,"H","2026-06-15","13:00","Atlanta","Espanha","Cabo Verde",0,0),
+  m(14,1,"G","2026-06-15","16:00","Seattle","Bélgica","Egito",1,1),
+  m(15,1,"H","2026-06-15","19:00","Miami","Arábia Saudita","Uruguai",1,1),
+  m(16,1,"G","2026-06-15","22:00","Los Angeles","Irã","Nova Zelândia",2,2),
+  m(17,1,"I","2026-06-16","16:00","Nova York/NJ","França","Senegal",3,1),
+  m(18,1,"I","2026-06-16","19:00","Boston","Iraque","Noruega",1,4),
+  m(19,1,"J","2026-06-16","22:00","Kansas City","Argentina","Argélia",3,0),
+  m(20,1,"J","2026-06-17","01:00","San Francisco","Áustria","Jordânia",3,1),
+  m(21,1,"K","2026-06-17","14:00","Houston","Portugal","RD Congo",1,1),
+  m(22,1,"L","2026-06-17","17:00","Dallas","Inglaterra","Croácia",4,2),
+  m(23,1,"L","2026-06-17","20:00","Toronto","Gana","Panamá",1,0),
+  m(24,1,"K","2026-06-17","23:00","Cidade do México","Uzbequistão","Colômbia",1,3),
+  // 2ª RODADA (Países Baixos x Suécia já confirmado; demais editáveis)
+  m(25,2,"A","2026-06-18","13:00","Atlanta","República Tcheca","África do Sul",1,1),
+  m(26,2,"B","2026-06-18","16:00","Los Angeles","Suíça","Bósnia-Herzegovina",4,1),
+  m(27,2,"B","2026-06-18","19:00","Vancouver","Canadá","Catar",6,0),
+  m(28,2,"A","2026-06-18","22:00","Guadalajara","México","Coreia do Sul",1,0),
+  m(29,2,"D","2026-06-19","16:00","Seattle","Estados Unidos","Austrália",2,0),
+  m(30,2,"C","2026-06-19","19:00","Boston","Escócia","Marrocos",0,1),
+  m(31,2,"C","2026-06-19","21:30","Philadelphia","Brasil","Haiti",3,0),
+  m(32,2,"D","2026-06-20","00:00","San Francisco","Turquia","Paraguai",0,1),
+  m(33,2,"F","2026-06-20","14:00","Houston","Países Baixos","Suécia",5,1),
+  m(34,2,"E","2026-06-20","17:00","Toronto","Alemanha","Costa do Marfim",2,1),
+  m(35,2,"E","2026-06-20","21:00","Kansas City","Equador","Curaçao",0,0),
+  m(36,2,"F","2026-06-21","01:00","Monterrey","Tunísia","Japão",0,4),
+  m(37,2,"H","2026-06-21","13:00","Atlanta","Espanha","Arábia Saudita",4,0),
+  m(38,2,"G","2026-06-21","16:00","Los Angeles","Bélgica","Irã",0,0),
+  m(39,2,"H","2026-06-21","19:00","Miami","Uruguai","Cabo Verde",2,2),
+  m(40,2,"G","2026-06-21","22:00","Vancouver","Nova Zelândia","Egito",1,3),
+  m(41,2,"J","2026-06-22","14:00","Dallas","Argentina","Áustria",1,0),
+  m(42,2,"I","2026-06-22","18:00","Philadelphia","França","Iraque"),
+  m(43,2,"I","2026-06-22","21:00","Nova York/NJ","Noruega","Senegal"),
+  m(44,2,"J","2026-06-23","00:00","San Francisco","Jordânia","Argélia"),
+  m(45,2,"K","2026-06-23","14:00","Houston","Portugal","Uzbequistão"),
+  m(46,2,"L","2026-06-23","17:00","Boston","Inglaterra","Gana"),
+  m(47,2,"L","2026-06-23","20:00","Toronto","Panamá","Croácia"),
+  m(48,2,"K","2026-06-23","23:00","Guadalajara","Colômbia","RD Congo"),
+  // 3ª RODADA
+  m(49,3,"B","2026-06-24","16:00","Vancouver","Suíça","Canadá"),
+  m(50,3,"B","2026-06-24","16:00","Seattle","Bósnia-Herzegovina","Catar"),
+  m(51,3,"C","2026-06-24","19:00","Miami","Escócia","Brasil"),
+  m(52,3,"C","2026-06-24","19:00","Atlanta","Marrocos","Haiti"),
+  m(53,3,"A","2026-06-24","22:00","Cidade do México","República Tcheca","México"),
+  m(54,3,"A","2026-06-24","22:00","Monterrey","África do Sul","Coreia do Sul"),
+  m(55,3,"E","2026-06-25","17:00","Philadelphia","Curaçao","Costa do Marfim"),
+  m(56,3,"E","2026-06-25","17:00","Nova York/NJ","Equador","Alemanha"),
+  m(57,3,"F","2026-06-25","20:00","Dallas","Japão","Suécia"),
+  m(58,3,"F","2026-06-25","20:00","Kansas City","Tunísia","Países Baixos"),
+  m(59,3,"D","2026-06-25","23:00","Los Angeles","Turquia","Estados Unidos"),
+  m(60,3,"D","2026-06-25","23:00","San Francisco","Paraguai","Austrália"),
+  m(61,3,"I","2026-06-26","16:00","Boston","Noruega","França"),
+  m(62,3,"I","2026-06-26","16:00","Toronto","Senegal","Iraque"),
+  m(63,3,"H","2026-06-26","21:00","Houston","Cabo Verde","Arábia Saudita"),
+  m(64,3,"H","2026-06-26","21:00","Guadalajara","Uruguai","Espanha"),
+  m(65,3,"G","2026-06-27","00:00","Seattle","Egito","Irã"),
+  m(66,3,"G","2026-06-27","00:00","Vancouver","Nova Zelândia","Bélgica"),
+  m(67,3,"L","2026-06-27","18:00","Nova York/NJ","Panamá","Inglaterra"),
+  m(68,3,"L","2026-06-27","18:00","Philadelphia","Croácia","Gana"),
+  m(69,3,"K","2026-06-27","20:30","Miami","Colômbia","Portugal"),
+  m(70,3,"K","2026-06-27","20:30","Atlanta","RD Congo","Uzbequistão"),
+  m(71,3,"J","2026-06-27","23:00","Kansas City","Argélia","Áustria"),
+  m(72,3,"J","2026-06-27","23:00","Dallas","Jordânia","Argentina")
+];
+
+/* ============================================================
+   ESTADO + PERSISTÊNCIA (localStorage)
+   ============================================================ */
+const LS_KEY = "copa2026_state_v1";
+let STATE = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const s = JSON.parse(raw);
+      const fresh = s.version !== DATA_VERSION; // dados oficiais foram atualizados nesta versão
+      const matches = BASE_MATCHES.map(bm=>{
+        const saved = (s.matches||[]).find(x=>x.id===bm.id);
+        // quando há dados novos, o placar oficial (não-nulo) sempre prevalece sobre o salvo
+        if(fresh && bm.hs!==null && bm.as!==null) return {...bm};
+        return saved ? {...bm, hs:saved.hs, as:saved.as} : {...bm};
+      });
+      return {matches, ko: s.ko||{}, updatedAt: s.updatedAt||null, simIds: s.simIds||[]};
+    }
+  }catch(e){console.warn("Falha ao ler localStorage",e);}
+  return {matches: BASE_MATCHES.map(x=>({...x})), ko:{}, updatedAt:null, simIds:[]};
+}
+function saveState(bump=true){
+  if(bump) STATE.updatedAt=Date.now();
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      version: DATA_VERSION,
+      updatedAt: STATE.updatedAt||null,
+      simIds: STATE.simIds||[],
+      matches: STATE.matches.map(({id,hs,as})=>({id,hs,as})),
+      ko: STATE.ko
+    }));
+  }catch(e){console.warn("Falha ao salvar",e);}
+  if(typeof renderUserStamp==="function") renderUserStamp();
+}
+function flag(t){
+  const code=CODES[t], e=FLAGS[t]||"";
+  if(code) return `<img class="flag-img" loading="lazy" src="https://api.fifa.com/api/v3/picture/flags-sq-1/${code}" alt="" data-emoji="${e}" onerror="flagErr(this)">`;
+  return e;
+}
+function flagErr(img){img.outerHTML=img.dataset.emoji||"";}
+
+/* ============================================================
+   I18N — idiomas das seleções participantes
+   ============================================================ */
+const LANGS=[["pt","Português"],["en","English"],["es","Español"],["fr","Français"],
+  ["de","Deutsch"],["nl","Nederlands"],["it","Italiano"],["hr","Hrvatski"],["no","Norsk"],
+  ["sv","Svenska"],["cs","Čeština"],["bs","Bosanski"],["tr","Türkçe"],["ar","العربية"],
+  ["fa","فارسی"],["ja","日本語"],["ko","한국어"],["uz","Oʻzbekcha"]];
+const LOCALE={pt:"pt-BR",en:"en",es:"es",fr:"fr",de:"de",nl:"nl",it:"it",hr:"hr",no:"nb",
+  sv:"sv",cs:"cs",bs:"bs",tr:"tr",ar:"ar",fa:"fa",ja:"ja",ko:"ko",uz:"uz"};
+const RTL=new Set(["ar","fa"]);
+const I18N={
+ pt:{title:"Copa do Mundo 2026",subtitle:"EUA · Canadá · México — Resultados, classificação e simulador · Horários de Brasília",nav_standings:"📊 Classificação",nav_matches:"📅 Jogos & Datas",nav_ko:"🔮 Simulador (Mata-mata)",standings_title:"Classificação dos 12 grupos",legend_q12:"1º e 2º — classificados",legend_q3:"3º — pode avançar (8 melhores)",legend_crit:"Critérios: Pontos · Saldo · Gols pró",matches_title:"Jogos & Datas",updated_until:"Resultados oficiais (fonte FIFA) preenchidos até:",updated_value:"22 de junho de 2026 (fim da 2ª rodada)",btn_update:"🔄 Atualizar resultados",note_matches:"Os placares dos jogos já realizados vêm preenchidos com os resultados oficiais. Edite qualquer placar para corrigir ou simular — tudo é salvo automaticamente no seu navegador.",all_rounds:"Todas as rodadas",round_label:"{n}ª Rodada",all_groups:"Todos os grupos",all_teams:"Todas as seleções",clear_round:"Limpar placares de uma rodada…",ko_title:"Simulador do mata-mata",ko_seed:"⚙️ Gerar chaveamento a partir da classificação",ko_reset:"Limpar palpites do mata-mata",ko_click:"Clique numa seleção para fazê-la avançar.",modal_body:"Este app funciona <b>offline</b> e roda direto do arquivo no seu computador. Por segurança, o navegador não deixa um arquivo local buscar dados ao vivo da FIFA sozinho. Por isso a atualização é feita pelo Claude: peça \"atualize os resultados\" que ele busca os jogos novos e regrava o app.",modal_ok:"Entendi",modal_text:"Os resultados oficiais já estão preenchidos até <b>{date}</b> — {n} de 72 jogos da fase de grupos com placar.",footer_main:"App da Copa 2026 · funciona offline em Mac e Windows · dados salvos localmente no seu computador.",footer_source:"Fonte oficial dos resultados:",group:"Grupo",th:["Seleção","J","V","E","D","GP","GC","SG","Pts"],no_matches:"Nenhum jogo com esses filtros.",no_bracket:"Nenhum chaveamento gerado ainda.",tbd:"A definir",final:"Final",third_place:"Disputa de 3º lugar",champion_label:"🏆 Campeão Mundial 2026",r32:"16-avos",r16:"Oitavas",qf:"Quartas",sf:"Semifinais",ko_note_seeded:"Chaveamento gerado. Clique numa seleção em cada confronto para avançá-la até a final. <i>Usa as 32 classificadas (12 1ºs, 12 2ºs e os 8 melhores 3ºs) por ranking — simulação aproximada.</i>",ko_note_ok:"Preencha os placares na aba Jogos e clique em Gerar chaveamento. Todos os jogos têm placar — pode gerar!",ko_note_missing:"Preencha os placares na aba Jogos e clique em Gerar chaveamento. Ainda faltam jogos com placar — você pode gerar mesmo assim.",prompt_clear:"Limpar placares de qual rodada? Digite 1, 2 ou 3:"},
+ en:{title:"2026 World Cup",subtitle:"USA · Canada · Mexico — Results, standings & simulator · Times in BRT",nav_standings:"📊 Standings",nav_matches:"📅 Matches & Dates",nav_ko:"🔮 Knockout Simulator",standings_title:"Standings of the 12 groups",legend_q12:"1st & 2nd — qualified",legend_q3:"3rd — can advance (best 8)",legend_crit:"Tiebreakers: Points · GD · Goals for",matches_title:"Matches & Dates",updated_until:"Official results (FIFA) filled up to:",updated_value:"June 22, 2026 (end of matchday 2)",btn_update:"🔄 Update results",note_matches:"Scores of played matches come pre-filled with the official results. Edit any score to correct or simulate — everything is saved automatically in your browser.",all_rounds:"All matchdays",round_label:"Matchday {n}",all_groups:"All groups",all_teams:"All teams",clear_round:"Clear a matchday's scores…",ko_title:"Knockout simulator",ko_seed:"⚙️ Build bracket from the standings",ko_reset:"Clear knockout picks",ko_click:"Click a team to advance it.",modal_body:"This app works <b>offline</b> and runs straight from the file on your computer. For security, the browser won't let a local file fetch live FIFA data by itself. So updates are done by Claude: just ask \"update the results\" and it fetches the new matches and rewrites the app.",modal_ok:"Got it",modal_text:"Official results are filled up to <b>{date}</b> — {n} of 72 group-stage matches have a score.",footer_main:"World Cup 2026 app · works offline on Mac and Windows · data saved locally on your computer.",footer_source:"Official results source:",group:"Group",th:["Team","P","W","D","L","GF","GA","GD","Pts"],no_matches:"No matches for these filters.",no_bracket:"No bracket generated yet.",tbd:"TBD",final:"Final",third_place:"Third place play-off",champion_label:"🏆 2026 World Champion",r32:"Round of 32",r16:"Round of 16",qf:"Quarter-finals",sf:"Semi-finals",ko_note_seeded:"Bracket generated. Click a team in each tie to advance it to the final. <i>Uses the 32 qualifiers (12 winners, 12 runners-up and best 8 thirds) by ranking — an approximate simulation.</i>",ko_note_ok:"Fill in the scores on the Matches tab and click Build bracket. All matches have a score — ready to go!",ko_note_missing:"Fill in the scores on the Matches tab and click Build bracket. Some matches still have no score — you can still generate it.",prompt_clear:"Clear scores of which matchday? Type 1, 2 or 3:"},
+ es:{title:"Mundial 2026",subtitle:"EE. UU. · Canadá · México — Resultados, clasificación y simulador · Horario de Brasilia",nav_standings:"📊 Clasificación",nav_matches:"📅 Partidos y Fechas",nav_ko:"🔮 Simulador (Eliminatorias)",standings_title:"Clasificación de los 12 grupos",legend_q12:"1.º y 2.º — clasificados",legend_q3:"3.º — puede avanzar (8 mejores)",legend_crit:"Desempate: Puntos · Diferencia · Goles a favor",matches_title:"Partidos y Fechas",updated_until:"Resultados oficiales (FIFA) cargados hasta:",updated_value:"22 de junio de 2026 (fin de la 2.ª jornada)",btn_update:"🔄 Actualizar resultados",note_matches:"Los marcadores de los partidos jugados vienen con los resultados oficiales. Edita cualquier marcador para corregir o simular — todo se guarda automáticamente en tu navegador.",all_rounds:"Todas las jornadas",round_label:"Jornada {n}",all_groups:"Todos los grupos",all_teams:"Todas las selecciones",clear_round:"Borrar marcadores de una jornada…",ko_title:"Simulador de eliminatorias",ko_seed:"⚙️ Generar cuadro desde la clasificación",ko_reset:"Borrar pronósticos",ko_click:"Haz clic en una selección para que avance.",modal_body:"Esta app funciona <b>sin conexión</b> y se ejecuta desde el archivo en tu computadora. Por seguridad, el navegador no permite que un archivo local consulte datos en vivo de la FIFA. Por eso las actualizaciones las hace Claude: pídele \"actualiza los resultados\" y busca los partidos nuevos.",modal_ok:"Entendido",modal_text:"Los resultados oficiales están cargados hasta <b>{date}</b> — {n} de 72 partidos de la fase de grupos con marcador.",footer_main:"App del Mundial 2026 · funciona sin conexión en Mac y Windows · datos guardados localmente.",footer_source:"Fuente oficial de los resultados:",group:"Grupo",th:["Selección","PJ","G","E","P","GF","GC","DG","Pts"],no_matches:"No hay partidos con esos filtros.",no_bracket:"Aún no se generó el cuadro.",tbd:"Por definir",final:"Final",third_place:"Tercer puesto",champion_label:"🏆 Campeón Mundial 2026",r32:"Dieciseisavos",r16:"Octavos",qf:"Cuartos",sf:"Semifinales",ko_note_seeded:"Cuadro generado. Haz clic en una selección de cada cruce para llevarla a la final. <i>Usa las 32 clasificadas (12 primeros, 12 segundos y los 8 mejores terceros) por ranking — simulación aproximada.</i>",ko_note_ok:"Carga los marcadores en la pestaña Partidos y pulsa Generar cuadro. ¡Todos los partidos tienen marcador!",ko_note_missing:"Carga los marcadores en la pestaña Partidos y pulsa Generar cuadro. Faltan partidos con marcador — puedes generarlo igual.",prompt_clear:"¿Borrar marcadores de qué jornada? Escribe 1, 2 o 3:"},
+ fr:{title:"Coupe du Monde 2026",subtitle:"USA · Canada · Mexique — Résultats, classement et simulateur · Heure de Brasília",nav_standings:"📊 Classement",nav_matches:"📅 Matchs et Dates",nav_ko:"🔮 Simulateur (Phase finale)",standings_title:"Classement des 12 groupes",legend_q12:"1er et 2e — qualifiés",legend_q3:"3e — peut avancer (8 meilleurs)",legend_crit:"Départage : Points · Diff. · Buts pour",matches_title:"Matchs et Dates",updated_until:"Résultats officiels (FIFA) remplis jusqu'au :",updated_value:"22 juin 2026 (fin de la 2e journée)",btn_update:"🔄 Mettre à jour",note_matches:"Les scores des matchs joués sont pré-remplis avec les résultats officiels. Modifiez n'importe quel score pour corriger ou simuler — tout est enregistré automatiquement dans votre navigateur.",all_rounds:"Toutes les journées",round_label:"Journée {n}",all_groups:"Tous les groupes",all_teams:"Toutes les équipes",clear_round:"Effacer les scores d'une journée…",ko_title:"Simulateur de phase finale",ko_seed:"⚙️ Générer le tableau depuis le classement",ko_reset:"Effacer les pronostics",ko_click:"Cliquez sur une équipe pour la faire avancer.",modal_body:"Cette appli fonctionne <b>hors ligne</b> et s'exécute depuis le fichier sur votre ordinateur. Par sécurité, le navigateur n'autorise pas un fichier local à récupérer les données en direct de la FIFA. Les mises à jour sont donc faites par Claude : demandez \"mets à jour les résultats\".",modal_ok:"Compris",modal_text:"Les résultats officiels sont remplis jusqu'au <b>{date}</b> — {n} des 72 matchs de groupes ont un score.",footer_main:"Appli Coupe du Monde 2026 · fonctionne hors ligne sur Mac et Windows · données enregistrées localement.",footer_source:"Source officielle des résultats :",group:"Groupe",th:["Équipe","J","G","N","P","BP","BC","Diff","Pts"],no_matches:"Aucun match pour ces filtres.",no_bracket:"Aucun tableau généré pour l'instant.",tbd:"À définir",final:"Finale",third_place:"Match pour la 3e place",champion_label:"🏆 Champion du Monde 2026",r32:"16es de finale",r16:"8es de finale",qf:"Quarts",sf:"Demi-finales",ko_note_seeded:"Tableau généré. Cliquez sur une équipe de chaque duel pour l'amener en finale. <i>Utilise les 32 qualifiés (12 1ers, 12 2es et les 8 meilleurs 3es) par classement — simulation approximative.</i>",ko_note_ok:"Saisissez les scores dans l'onglet Matchs et cliquez sur Générer le tableau. Tous les matchs ont un score !",ko_note_missing:"Saisissez les scores dans l'onglet Matchs et cliquez sur Générer le tableau. Il manque des scores — vous pouvez quand même générer.",prompt_clear:"Effacer les scores de quelle journée ? Tapez 1, 2 ou 3 :"},
+ de:{title:"Weltmeisterschaft 2026",subtitle:"USA · Kanada · Mexiko — Ergebnisse, Tabelle & Simulator · Zeiten in BRT",nav_standings:"📊 Tabelle",nav_matches:"📅 Spiele & Termine",nav_ko:"🔮 K.-o.-Simulator",standings_title:"Tabellen der 12 Gruppen",legend_q12:"1. & 2. — qualifiziert",legend_q3:"3. — kann weiterkommen (beste 8)",legend_crit:"Kriterien: Punkte · Tordiff. · Tore",matches_title:"Spiele & Termine",updated_until:"Offizielle Ergebnisse (FIFA) befüllt bis:",updated_value:"22. Juni 2026 (Ende des 2. Spieltags)",btn_update:"🔄 Ergebnisse aktualisieren",note_matches:"Die Ergebnisse gespielter Partien sind mit den offiziellen Resultaten vorausgefüllt. Bearbeite jeden Spielstand zum Korrigieren oder Simulieren — alles wird automatisch im Browser gespeichert.",all_rounds:"Alle Spieltage",round_label:"{n}. Spieltag",all_groups:"Alle Gruppen",all_teams:"Alle Teams",clear_round:"Ergebnisse eines Spieltags löschen…",ko_title:"K.-o.-Simulator",ko_seed:"⚙️ Tableau aus der Tabelle erstellen",ko_reset:"Tipps löschen",ko_click:"Klicke ein Team an, um es weiterzubringen.",modal_body:"Diese App funktioniert <b>offline</b> und läuft direkt aus der Datei auf deinem Computer. Aus Sicherheitsgründen darf eine lokale Datei keine Live-Daten der FIFA abrufen. Updates macht daher Claude: sag einfach \"aktualisiere die Ergebnisse\".",modal_ok:"Verstanden",modal_text:"Offizielle Ergebnisse sind bis <b>{date}</b> befüllt — {n} von 72 Gruppenspielen mit Ergebnis.",footer_main:"WM-2026-App · läuft offline auf Mac und Windows · Daten lokal gespeichert.",footer_source:"Offizielle Ergebnisquelle:",group:"Gruppe",th:["Team","Sp","S","U","N","Tore+","Tore-","Diff","Pkt"],no_matches:"Keine Spiele für diese Filter.",no_bracket:"Noch kein Tableau erstellt.",tbd:"offen",final:"Finale",third_place:"Spiel um Platz 3",champion_label:"🏆 Weltmeister 2026",r32:"Sechzehntelfinale",r16:"Achtelfinale",qf:"Viertelfinale",sf:"Halbfinale",ko_note_seeded:"Tableau erstellt. Klicke in jeder Paarung ein Team an, um es bis ins Finale zu bringen. <i>Nutzt die 32 Qualifizierten (12 Erste, 12 Zweite und die 8 besten Dritten) nach Ranking — eine Näherungssimulation.</i>",ko_note_ok:"Trage die Ergebnisse im Tab Spiele ein und klicke auf Tableau erstellen. Alle Spiele haben ein Ergebnis!",ko_note_missing:"Trage die Ergebnisse im Tab Spiele ein und klicke auf Tableau erstellen. Es fehlen noch Ergebnisse — du kannst es trotzdem erstellen.",prompt_clear:"Ergebnisse welches Spieltags löschen? Gib 1, 2 oder 3 ein:"},
+ nl:{title:"WK 2026",subtitle:"VS · Canada · Mexico — Uitslagen, stand & simulator · Tijden in BRT",nav_standings:"📊 Stand",nav_matches:"📅 Wedstrijden & Data",nav_ko:"🔮 Knock-outsimulator",standings_title:"Stand van de 12 groepen",legend_q12:"1e & 2e — geplaatst",legend_q3:"3e — kan doorgaan (beste 8)",legend_crit:"Beslissing: Punten · Saldo · Doelpunten",matches_title:"Wedstrijden & Data",updated_until:"Officiële uitslagen (FIFA) ingevuld t/m:",updated_value:"22 juni 2026 (einde 2e speelronde)",btn_update:"🔄 Uitslagen bijwerken",note_matches:"De uitslagen van gespeelde wedstrijden zijn vooraf ingevuld met de officiële resultaten. Pas elke score aan om te corrigeren of simuleren — alles wordt automatisch in je browser opgeslagen.",all_rounds:"Alle speelronden",round_label:"Speelronde {n}",all_groups:"Alle groepen",all_teams:"Alle teams",clear_round:"Scores van een speelronde wissen…",ko_title:"Knock-outsimulator",ko_seed:"⚙️ Schema maken op basis van de stand",ko_reset:"Voorspellingen wissen",ko_click:"Klik op een team om het door te laten gaan.",modal_body:"Deze app werkt <b>offline</b> en draait rechtstreeks vanuit het bestand op je computer. Uit veiligheid mag een lokaal bestand geen live FIFA-gegevens ophalen. Updates doet Claude dus: vraag \"werk de uitslagen bij\".",modal_ok:"Begrepen",modal_text:"Officiële uitslagen zijn ingevuld t/m <b>{date}</b> — {n} van 72 groepswedstrijden met score.",footer_main:"WK 2026-app · werkt offline op Mac en Windows · gegevens lokaal opgeslagen.",footer_source:"Officiële bron van uitslagen:",group:"Groep",th:["Team","G","W","G","V","DV","DT","DS","Ptn"],no_matches:"Geen wedstrijden voor deze filters.",no_bracket:"Nog geen schema gegenereerd.",tbd:"n.t.b.",final:"Finale",third_place:"Troostfinale",champion_label:"🏆 Wereldkampioen 2026",r32:"1/16 finale",r16:"Achtste finale",qf:"Kwartfinale",sf:"Halve finale",ko_note_seeded:"Schema gemaakt. Klik in elke confrontatie op een team om het naar de finale te brengen. <i>Gebruikt de 32 gekwalificeerden (12 eersten, 12 tweeden en de 8 beste derden) op ranking — een benadering.</i>",ko_note_ok:"Vul de scores in op het tabblad Wedstrijden en klik op Schema maken. Alle wedstrijden hebben een score!",ko_note_missing:"Vul de scores in op het tabblad Wedstrijden en klik op Schema maken. Er ontbreken nog scores — je kunt het toch maken.",prompt_clear:"Scores van welke speelronde wissen? Typ 1, 2 of 3:"},
+ it:{title:"Mondiali 2026",subtitle:"USA · Canada · Messico — Risultati, classifica e simulatore · Ora di Brasilia",nav_standings:"📊 Classifica",nav_matches:"📅 Partite e Date",nav_ko:"🔮 Simulatore (Eliminazione)",standings_title:"Classifica dei 12 gironi",legend_q12:"1ª e 2ª — qualificate",legend_q3:"3ª — può avanzare (migliori 8)",legend_crit:"Criteri: Punti · Diff. reti · Gol fatti",matches_title:"Partite e Date",updated_until:"Risultati ufficiali (FIFA) inseriti fino al:",updated_value:"22 giugno 2026 (fine 2ª giornata)",btn_update:"🔄 Aggiorna risultati",note_matches:"I punteggi delle partite giocate sono precompilati con i risultati ufficiali. Modifica qualsiasi punteggio per correggere o simulare — tutto è salvato automaticamente nel browser.",all_rounds:"Tutte le giornate",round_label:"Giornata {n}",all_groups:"Tutti i gironi",all_teams:"Tutte le nazionali",clear_round:"Cancella i punteggi di una giornata…",ko_title:"Simulatore a eliminazione",ko_seed:"⚙️ Genera il tabellone dalla classifica",ko_reset:"Cancella i pronostici",ko_click:"Clicca su una squadra per farla avanzare.",modal_body:"Questa app funziona <b>offline</b> e si avvia dal file sul tuo computer. Per sicurezza il browser non consente a un file locale di scaricare i dati live della FIFA. Gli aggiornamenti li fa Claude: chiedi \"aggiorna i risultati\".",modal_ok:"Capito",modal_text:"I risultati ufficiali sono inseriti fino al <b>{date}</b> — {n} di 72 partite della fase a gironi con punteggio.",footer_main:"App Mondiali 2026 · funziona offline su Mac e Windows · dati salvati localmente.",footer_source:"Fonte ufficiale dei risultati:",group:"Girone",th:["Squadra","G","V","N","P","GF","GS","DR","Pt"],no_matches:"Nessuna partita per questi filtri.",no_bracket:"Nessun tabellone generato.",tbd:"Da definire",final:"Finale",third_place:"Finale 3º posto",champion_label:"🏆 Campione del Mondo 2026",r32:"Sedicesimi",r16:"Ottavi",qf:"Quarti",sf:"Semifinali",ko_note_seeded:"Tabellone generato. Clicca su una squadra in ogni sfida per portarla in finale. <i>Usa le 32 qualificate (12 prime, 12 seconde e le 8 migliori terze) per ranking — simulazione approssimativa.</i>",ko_note_ok:"Inserisci i punteggi nella scheda Partite e clicca su Genera tabellone. Tutte le partite hanno un punteggio!",ko_note_missing:"Inserisci i punteggi nella scheda Partite e clicca su Genera tabellone. Mancano punteggi — puoi generarlo lo stesso.",prompt_clear:"Cancellare i punteggi di quale giornata? Digita 1, 2 o 3:"},
+ hr:{title:"Svjetsko prvenstvo 2026.",subtitle:"SAD · Kanada · Meksiko — Rezultati, poredak i simulator · Vrijeme BRT",nav_standings:"📊 Poredak",nav_matches:"📅 Utakmice i datumi",nav_ko:"🔮 Simulator (Nokaut)",standings_title:"Poredak 12 skupina",legend_q12:"1. i 2. — prolaze",legend_q3:"3. — može proći (najboljih 8)",legend_crit:"Kriteriji: Bodovi · Gol-razlika · Postignuti",matches_title:"Utakmice i datumi",updated_until:"Službeni rezultati (FIFA) uneseni do:",updated_value:"22. lipnja 2026. (kraj 2. kola)",btn_update:"🔄 Osvježi rezultate",note_matches:"Rezultati odigranih utakmica već su uneseni prema službenim rezultatima. Uredi bilo koji rezultat za ispravak ili simulaciju — sve se automatski sprema u preglednik.",all_rounds:"Sva kola",round_label:"{n}. kolo",all_groups:"Sve skupine",all_teams:"Sve reprezentacije",clear_round:"Obriši rezultate jednog kola…",ko_title:"Simulator nokaut faze",ko_seed:"⚙️ Složi ljestvicu iz poretka",ko_reset:"Obriši predviđanja",ko_click:"Klikni reprezentaciju da prođe dalje.",modal_body:"Aplikacija radi <b>offline</b> i pokreće se izravno iz datoteke na računalu. Iz sigurnosnih razloga lokalna datoteka ne smije sama dohvaćati FIFA podatke uživo. Ažuriranja radi Claude: zatraži \"osvježi rezultate\".",modal_ok:"U redu",modal_text:"Službeni rezultati uneseni su do <b>{date}</b> — {n} od 72 utakmice skupina ima rezultat.",footer_main:"Aplikacija SP 2026. · radi offline na Macu i Windowsu · podaci spremljeni lokalno.",footer_source:"Službeni izvor rezultata:",group:"Skupina",th:["Reprez.","U","P","N","I","DG","PG","GR","Bod"],no_matches:"Nema utakmica za ove filtre.",no_bracket:"Ljestvica još nije složena.",tbd:"Neodređeno",final:"Finale",third_place:"Za 3. mjesto",champion_label:"🏆 Svjetski prvak 2026.",r32:"Šesnaestina",r16:"Osmina",qf:"Četvrtfinale",sf:"Polufinale",ko_note_seeded:"Ljestvica složena. Klikni reprezentaciju u svakom paru da je odvedeš u finale. <i>Koristi 32 prolaznika (12 prvih, 12 drugih i 8 najboljih trećih) po rangu — približna simulacija.</i>",ko_note_ok:"Unesi rezultate u kartici Utakmice i klikni Složi ljestvicu. Sve utakmice imaju rezultat!",ko_note_missing:"Unesi rezultate u kartici Utakmice i klikni Složi ljestvicu. Nedostaju rezultati — možeš ipak složiti.",prompt_clear:"Obrisati rezultate kojeg kola? Upiši 1, 2 ili 3:"},
+ no:{title:"VM 2026",subtitle:"USA · Canada · Mexico — Resultater, tabell og simulator · Tider i BRT",nav_standings:"📊 Tabell",nav_matches:"📅 Kamper og datoer",nav_ko:"🔮 Sluttspill-simulator",standings_title:"Tabell for de 12 gruppene",legend_q12:"1. og 2. — kvalifisert",legend_q3:"3. — kan gå videre (8 beste)",legend_crit:"Kriterier: Poeng · Målforskjell · Scorede mål",matches_title:"Kamper og datoer",updated_until:"Offisielle resultater (FIFA) fylt inn til:",updated_value:"22. juni 2026 (slutten av 2. runde)",btn_update:"🔄 Oppdater resultater",note_matches:"Resultatene fra spilte kamper er forhåndsutfylt med de offisielle resultatene. Rediger et hvilket som helst resultat for å korrigere eller simulere — alt lagres automatisk i nettleseren.",all_rounds:"Alle runder",round_label:"Runde {n}",all_groups:"Alle grupper",all_teams:"Alle lag",clear_round:"Slett resultatene for en runde…",ko_title:"Sluttspill-simulator",ko_seed:"⚙️ Lag oppsett fra tabellen",ko_reset:"Slett tips",ko_click:"Klikk på et lag for å sende det videre.",modal_body:"Denne appen fungerer <b>frakoblet</b> og kjører rett fra filen på datamaskinen. Av sikkerhetshensyn får ikke en lokal fil hente live FIFA-data selv. Oppdateringer gjøres derfor av Claude: be om \"oppdater resultatene\".",modal_ok:"Skjønner",modal_text:"Offisielle resultater er fylt inn til <b>{date}</b> — {n} av 72 gruppespillskamper har resultat.",footer_main:"VM 2026-app · fungerer frakoblet på Mac og Windows · data lagret lokalt.",footer_source:"Offisiell resultatkilde:",group:"Gruppe",th:["Lag","K","S","U","T","MS","MI","MF","Po"],no_matches:"Ingen kamper for disse filtrene.",no_bracket:"Ingen oppsett laget ennå.",tbd:"Avklares",final:"Finale",third_place:"Bronsefinale",champion_label:"🏆 Verdensmester 2026",r32:"16-delsfinale",r16:"Åttedelsfinale",qf:"Kvartfinale",sf:"Semifinale",ko_note_seeded:"Oppsett laget. Klikk på et lag i hvert oppgjør for å sende det til finalen. <i>Bruker de 32 kvalifiserte (12 gruppevinnere, 12 toere og de 8 beste treerne) etter rangering — en omtrentlig simulering.</i>",ko_note_ok:"Fyll inn resultatene i Kamper-fanen og klikk Lag oppsett. Alle kamper har resultat!",ko_note_missing:"Fyll inn resultatene i Kamper-fanen og klikk Lag oppsett. Noen kamper mangler resultat — du kan likevel lage det.",prompt_clear:"Slette resultatene for hvilken runde? Skriv 1, 2 eller 3:"},
+ sv:{title:"VM 2026",subtitle:"USA · Kanada · Mexiko — Resultat, tabell och simulator · Tider i BRT",nav_standings:"📊 Tabell",nav_matches:"📅 Matcher och datum",nav_ko:"🔮 Slutspelssimulator",standings_title:"Tabell för de 12 grupperna",legend_q12:"1:a & 2:a — kvalificerade",legend_q3:"3:a — kan gå vidare (8 bästa)",legend_crit:"Kriterier: Poäng · Målskillnad · Gjorda mål",matches_title:"Matcher och datum",updated_until:"Officiella resultat (FIFA) ifyllda t.o.m.:",updated_value:"22 juni 2026 (slutet av omgång 2)",btn_update:"🔄 Uppdatera resultat",note_matches:"Resultaten från spelade matcher är förifyllda med de officiella resultaten. Redigera valfritt resultat för att rätta eller simulera — allt sparas automatiskt i webbläsaren.",all_rounds:"Alla omgångar",round_label:"Omgång {n}",all_groups:"Alla grupper",all_teams:"Alla lag",clear_round:"Rensa en omgångs resultat…",ko_title:"Slutspelssimulator",ko_seed:"⚙️ Skapa slutspelsträd från tabellen",ko_reset:"Rensa tips",ko_click:"Klicka på ett lag för att skicka det vidare.",modal_body:"Appen fungerar <b>offline</b> och körs direkt från filen på din dator. Av säkerhetsskäl får en lokal fil inte hämta live-data från FIFA själv. Uppdateringar görs därför av Claude: be om \"uppdatera resultaten\".",modal_ok:"Uppfattat",modal_text:"Officiella resultat är ifyllda t.o.m. <b>{date}</b> — {n} av 72 gruppspelsmatcher har resultat.",footer_main:"VM 2026-app · fungerar offline på Mac och Windows · data sparas lokalt.",footer_source:"Officiell resultatkälla:",group:"Grupp",th:["Lag","M","V","O","F","GM","IM","MS","P"],no_matches:"Inga matcher för dessa filter.",no_bracket:"Inget slutspelsträd skapat än.",tbd:"Ej klart",final:"Final",third_place:"Bronsmatch",champion_label:"🏆 Världsmästare 2026",r32:"Sextondelsfinal",r16:"Åttondelsfinal",qf:"Kvartsfinal",sf:"Semifinal",ko_note_seeded:"Slutspelsträd skapat. Klicka på ett lag i varje möte för att ta det till final. <i>Använder de 32 kvalificerade (12 gruppsegrare, 12 tvåor och de 8 bästa treorna) efter ranking — en ungefärlig simulering.</i>",ko_note_ok:"Fyll i resultaten under fliken Matcher och klicka på Skapa slutspelsträd. Alla matcher har resultat!",ko_note_missing:"Fyll i resultaten under fliken Matcher och klicka på Skapa slutspelsträd. Vissa matcher saknar resultat — du kan ändå skapa det.",prompt_clear:"Rensa resultaten för vilken omgång? Skriv 1, 2 eller 3:"},
+ cs:{title:"Mistrovství světa 2026",subtitle:"USA · Kanada · Mexiko — Výsledky, tabulka a simulátor · Časy v BRT",nav_standings:"📊 Tabulka",nav_matches:"📅 Zápasy a termíny",nav_ko:"🔮 Simulátor (Vyřazovací)",standings_title:"Tabulky 12 skupin",legend_q12:"1. a 2. — postupují",legend_q3:"3. — může postoupit (8 nejlepších)",legend_crit:"Kritéria: Body · Skóre · Vstřelené",matches_title:"Zápasy a termíny",updated_until:"Oficiální výsledky (FIFA) vyplněny do:",updated_value:"22. června 2026 (konec 2. kola)",btn_update:"🔄 Aktualizovat výsledky",note_matches:"Výsledky odehraných zápasů jsou předvyplněny oficiálními výsledky. Uprav libovolný výsledek pro opravu nebo simulaci — vše se automaticky ukládá v prohlížeči.",all_rounds:"Všechna kola",round_label:"{n}. kolo",all_groups:"Všechny skupiny",all_teams:"Všechny týmy",clear_round:"Smazat výsledky jednoho kola…",ko_title:"Simulátor vyřazovací fáze",ko_seed:"⚙️ Sestavit pavouka z tabulky",ko_reset:"Smazat tipy",ko_click:"Klikni na tým, aby postoupil.",modal_body:"Tato aplikace funguje <b>offline</b> a běží přímo ze souboru v počítači. Z bezpečnostních důvodů nesmí místní soubor sám stahovat živá data FIFA. Aktualizace proto dělá Claude: požádej \"aktualizuj výsledky\".",modal_ok:"Rozumím",modal_text:"Oficiální výsledky jsou vyplněny do <b>{date}</b> — {n} ze 72 zápasů skupin má výsledek.",footer_main:"Aplikace MS 2026 · funguje offline na Macu i Windows · data uložena lokálně.",footer_source:"Oficiální zdroj výsledků:",group:"Skupina",th:["Tým","Z","V","R","P","VG","OG","Rozdíl","B"],no_matches:"Žádné zápasy pro tyto filtry.",no_bracket:"Pavouk zatím nesestaven.",tbd:"Bude určeno",final:"Finále",third_place:"O 3. místo",champion_label:"🏆 Mistr světa 2026",r32:"Šestnáctifinále",r16:"Osmifinále",qf:"Čtvrtfinále",sf:"Semifinále",ko_note_seeded:"Pavouk sestaven. Klikni na tým v každém souboji, aby postoupil až do finále. <i>Používá 32 postupujících (12 vítězů, 12 druhých a 8 nejlepších třetích) podle pořadí — přibližná simulace.</i>",ko_note_ok:"Vyplň výsledky v záložce Zápasy a klikni na Sestavit pavouka. Všechny zápasy mají výsledek!",ko_note_missing:"Vyplň výsledky v záložce Zápasy a klikni na Sestavit pavouka. Některé zápasy nemají výsledek — přesto lze sestavit.",prompt_clear:"Smazat výsledky kterého kola? Zadej 1, 2 nebo 3:"},
+ bs:{title:"Svjetsko prvenstvo 2026.",subtitle:"SAD · Kanada · Meksiko — Rezultati, tabela i simulator · Vrijeme BRT",nav_standings:"📊 Tabela",nav_matches:"📅 Utakmice i datumi",nav_ko:"🔮 Simulator (Nokaut)",standings_title:"Tabele 12 grupa",legend_q12:"1. i 2. — prolaze",legend_q3:"3. — može proći (8 najboljih)",legend_crit:"Kriteriji: Bodovi · Gol-razlika · Dati golovi",matches_title:"Utakmice i datumi",updated_until:"Zvanični rezultati (FIFA) uneseni do:",updated_value:"22. juni 2026. (kraj 2. kola)",btn_update:"🔄 Osvježi rezultate",note_matches:"Rezultati odigranih utakmica već su uneseni prema zvaničnim rezultatima. Uredi bilo koji rezultat za ispravku ili simulaciju — sve se automatski čuva u pregledniku.",all_rounds:"Sva kola",round_label:"{n}. kolo",all_groups:"Sve grupe",all_teams:"Sve reprezentacije",clear_round:"Obriši rezultate jednog kola…",ko_title:"Simulator nokaut faze",ko_seed:"⚙️ Sastavi raspored iz tabele",ko_reset:"Obriši predviđanja",ko_click:"Klikni reprezentaciju da prođe dalje.",modal_body:"Aplikacija radi <b>offline</b> i pokreće se direktno iz fajla na računaru. Iz sigurnosnih razloga lokalni fajl ne smije sam preuzimati FIFA podatke uživo. Ažuriranja radi Claude: zatraži \"osvježi rezultate\".",modal_ok:"U redu",modal_text:"Zvanični rezultati uneseni su do <b>{date}</b> — {n} od 72 utakmice grupa ima rezultat.",footer_main:"Aplikacija SP 2026. · radi offline na Macu i Windowsu · podaci sačuvani lokalno.",footer_source:"Zvanični izvor rezultata:",group:"Grupa",th:["Reprez.","U","P","N","I","DG","PG","GR","Bod"],no_matches:"Nema utakmica za ove filtere.",no_bracket:"Raspored još nije sastavljen.",tbd:"Neodređeno",final:"Finale",third_place:"Za 3. mjesto",champion_label:"🏆 Svjetski prvak 2026.",r32:"Šesnaestina",r16:"Osmina",qf:"Četvrtfinale",sf:"Polufinale",ko_note_seeded:"Raspored sastavljen. Klikni reprezentaciju u svakom paru da je odvedeš u finale. <i>Koristi 32 učesnika (12 prvih, 12 drugih i 8 najboljih trećih) po rangu — približna simulacija.</i>",ko_note_ok:"Unesi rezultate u kartici Utakmice i klikni Sastavi raspored. Sve utakmice imaju rezultat!",ko_note_missing:"Unesi rezultate u kartici Utakmice i klikni Sastavi raspored. Nedostaju rezultati — možeš ipak sastaviti.",prompt_clear:"Obrisati rezultate kojeg kola? Upiši 1, 2 ili 3:"},
+ tr:{title:"2026 Dünya Kupası",subtitle:"ABD · Kanada · Meksika — Sonuçlar, puan durumu ve simülatör · BRT saatleri",nav_standings:"📊 Puan Durumu",nav_matches:"📅 Maçlar ve Tarihler",nav_ko:"🔮 Eleme Simülatörü",standings_title:"12 grubun puan durumu",legend_q12:"1. ve 2. — tur atladı",legend_q3:"3. — geçebilir (en iyi 8)",legend_crit:"Kriterler: Puan · Averaj · Atılan gol",matches_title:"Maçlar ve Tarihler",updated_until:"Resmî sonuçlar (FIFA) şu tarihe kadar dolu:",updated_value:"22 Haziran 2026 (2. hafta sonu)",btn_update:"🔄 Sonuçları güncelle",note_matches:"Oynanan maçların skorları resmî sonuçlarla önceden dolduruldu. Düzeltmek veya simülasyon için herhangi bir skoru düzenle — her şey tarayıcında otomatik kaydedilir.",all_rounds:"Tüm haftalar",round_label:"{n}. hafta",all_groups:"Tüm gruplar",all_teams:"Tüm takımlar",clear_round:"Bir haftanın skorlarını temizle…",ko_title:"Eleme simülatörü",ko_seed:"⚙️ Puan durumundan eşleşmeleri oluştur",ko_reset:"Tahminleri temizle",ko_click:"Bir takımı tur atlatmak için tıkla.",modal_body:"Bu uygulama <b>çevrimdışı</b> çalışır ve bilgisayarındaki dosyadan doğrudan açılır. Güvenlik nedeniyle yerel bir dosya FIFA canlı verilerini kendi başına çekemez. Güncellemeleri Claude yapar: \"sonuçları güncelle\" demen yeterli.",modal_ok:"Anladım",modal_text:"Resmî sonuçlar <b>{date}</b> tarihine kadar dolu — 72 grup maçından {n} tanesinin skoru var.",footer_main:"2026 Dünya Kupası uygulaması · Mac ve Windows'ta çevrimdışı çalışır · veriler yerel olarak saklanır.",footer_source:"Resmî sonuç kaynağı:",group:"Grup",th:["Takım","O","G","B","M","AG","YG","Av","P"],no_matches:"Bu filtrelere uygun maç yok.",no_bracket:"Henüz eşleşme oluşturulmadı.",tbd:"Belirlenecek",final:"Final",third_place:"Üçüncülük maçı",champion_label:"🏆 2026 Dünya Şampiyonu",r32:"Son 32",r16:"Son 16",qf:"Çeyrek final",sf:"Yarı final",ko_note_seeded:"Eşleşmeler oluşturuldu. Her eşleşmede bir takıma tıklayarak finale kadar taşı. <i>Sıralamaya göre 32 takımı (12 birinci, 12 ikinci ve en iyi 8 üçüncü) kullanır — yaklaşık bir simülasyon.</i>",ko_note_ok:"Maçlar sekmesinde skorları gir ve Eşleşmeleri oluştur'a tıkla. Tüm maçların skoru var!",ko_note_missing:"Maçlar sekmesinde skorları gir ve Eşleşmeleri oluştur'a tıkla. Bazı maçların skoru eksik — yine de oluşturabilirsin.",prompt_clear:"Hangi haftanın skorları silinsin? 1, 2 veya 3 yaz:"},
+ ar:{title:"كأس العالم 2026",subtitle:"الولايات المتحدة · كندا · المكسيك — النتائج والترتيب والمحاكي · بتوقيت برازيليا",nav_standings:"📊 الترتيب",nav_matches:"📅 المباريات والمواعيد",nav_ko:"🔮 محاكي الأدوار الإقصائية",standings_title:"ترتيب المجموعات الـ12",legend_q12:"الأول والثاني — متأهلان",legend_q3:"الثالث — قد يتأهل (أفضل 8)",legend_crit:"المعايير: النقاط · الفارق · الأهداف",matches_title:"المباريات والمواعيد",updated_until:"النتائج الرسمية (فيفا) محدّثة حتى:",updated_value:"22 يونيو 2026 (نهاية الجولة الثانية)",btn_update:"🔄 تحديث النتائج",note_matches:"نتائج المباريات المُقامة مُعبّأة مسبقًا بالنتائج الرسمية. عدّل أي نتيجة للتصحيح أو المحاكاة — يُحفظ كل شيء تلقائيًا في متصفحك.",all_rounds:"كل الجولات",round_label:"الجولة {n}",all_groups:"كل المجموعات",all_teams:"كل المنتخبات",clear_round:"مسح نتائج جولة…",ko_title:"محاكي الأدوار الإقصائية",ko_seed:"⚙️ إنشاء الجدول من الترتيب",ko_reset:"مسح التوقعات",ko_click:"انقر على منتخب ليتأهل.",modal_body:"يعمل هذا التطبيق <b>دون اتصال</b> ويُشغَّل مباشرة من الملف على حاسوبك. لأسباب أمنية لا يسمح المتصفح لملف محلي بجلب بيانات فيفا الحية بنفسه. لذلك يقوم Claude بالتحديث: اطلب \"حدّث النتائج\".",modal_ok:"حسنًا",modal_text:"النتائج الرسمية مُعبّأة حتى <b>{date}</b> — {n} من 72 مباراة في دور المجموعات لها نتيجة.",footer_main:"تطبيق كأس العالم 2026 · يعمل دون اتصال على ماك وويندوز · البيانات محفوظة محليًا.",footer_source:"المصدر الرسمي للنتائج:",group:"المجموعة",th:["المنتخب","لعب","فوز","تعادل","خسارة","له","عليه","الفارق","نقاط"],no_matches:"لا مباريات بهذه المرشحات.",no_bracket:"لم يُنشأ الجدول بعد.",tbd:"يُحدَّد لاحقًا",final:"النهائي",third_place:"تحديد المركز الثالث",champion_label:"🏆 بطل العالم 2026",r32:"دور الـ32",r16:"دور الـ16",qf:"ربع النهائي",sf:"نصف النهائي",ko_note_seeded:"تم إنشاء الجدول. انقر على منتخب في كل مواجهة لتصعيده حتى النهائي. <i>يستخدم الـ32 المتأهلين (12 أولًا و12 ثانيًا وأفضل 8 من أصحاب المركز الثالث) حسب الترتيب — محاكاة تقريبية.</i>",ko_note_ok:"أدخل النتائج في تبويب المباريات وانقر على إنشاء الجدول. كل المباريات لها نتيجة!",ko_note_missing:"أدخل النتائج في تبويب المباريات وانقر على إنشاء الجدول. ما زالت بعض النتائج ناقصة — يمكنك الإنشاء رغم ذلك.",prompt_clear:"مسح نتائج أي جولة؟ اكتب 1 أو 2 أو 3:"},
+ fa:{title:"جام جهانی ۲۰۲۶",subtitle:"آمریکا · کانادا · مکزیک — نتایج، جدول و شبیه‌ساز · به وقت برازیلیا",nav_standings:"📊 جدول",nav_matches:"📅 بازی‌ها و تاریخ‌ها",nav_ko:"🔮 شبیه‌ساز حذفی",standings_title:"جدول ۱۲ گروه",legend_q12:"اول و دوم — صعود",legend_q3:"سوم — ممکن است صعود کند (۸ تیم برتر)",legend_crit:"معیارها: امتیاز · تفاضل · گل‌زده",matches_title:"بازی‌ها و تاریخ‌ها",updated_until:"نتایج رسمی (فیفا) تکمیل‌شده تا:",updated_value:"۲۲ ژوئن ۲۰۲۶ (پایان هفته دوم)",btn_update:"🔄 به‌روزرسانی نتایج",note_matches:"نتایج بازی‌های انجام‌شده با نتایج رسمی از پیش پر شده‌اند. هر نتیجه را برای اصلاح یا شبیه‌سازی ویرایش کنید — همه‌چیز به‌طور خودکار در مرورگر ذخیره می‌شود.",all_rounds:"همه هفته‌ها",round_label:"هفته {n}",all_groups:"همه گروه‌ها",all_teams:"همه تیم‌ها",clear_round:"پاک‌کردن نتایج یک هفته…",ko_title:"شبیه‌ساز مرحله حذفی",ko_seed:"⚙️ ساخت جدول حذفی از رده‌بندی",ko_reset:"پاک‌کردن پیش‌بینی‌ها",ko_click:"روی یک تیم کلیک کنید تا صعود کند.",modal_body:"این برنامه <b>آفلاین</b> کار می‌کند و مستقیم از روی فایل رایانه اجرا می‌شود. به دلایل امنیتی مرورگر اجازه نمی‌دهد یک فایل محلی خودش داده‌های زنده فیفا را بگیرد. پس به‌روزرسانی را Claude انجام می‌دهد: بگویید «نتایج را به‌روزرسانی کن».",modal_ok:"متوجه شدم",modal_text:"نتایج رسمی تا <b>{date}</b> تکمیل شده‌اند — {n} از ۷۲ بازی مرحله گروهی نتیجه دارند.",footer_main:"برنامه جام جهانی ۲۰۲۶ · آفلاین روی مک و ویندوز کار می‌کند · داده‌ها محلی ذخیره می‌شوند.",footer_source:"منبع رسمی نتایج:",group:"گروه",th:["تیم","بازی","برد","مساوی","باخت","زده","خورده","تفاضل","امتیاز"],no_matches:"بازی‌ای با این فیلترها نیست.",no_bracket:"هنوز جدولی ساخته نشده.",tbd:"نامشخص",final:"فینال",third_place:"رده‌بندی سوم",champion_label:"🏆 قهرمان جهان ۲۰۲۶",r32:"مرحله یک‌شانزدهم",r16:"یک‌هشتم نهایی",qf:"یک‌چهارم نهایی",sf:"نیمه‌نهایی",ko_note_seeded:"جدول حذفی ساخته شد. در هر دیدار روی یک تیم کلیک کنید تا به فینال برسد. <i>از ۳۲ تیم صعودکننده (۱۲ صدرنشین، ۱۲ تیم دوم و ۸ تیم سوم برتر) بر اساس رتبه استفاده می‌کند — شبیه‌سازی تقریبی.</i>",ko_note_ok:"نتایج را در زبانه بازی‌ها وارد کنید و روی ساخت جدول کلیک کنید. همه بازی‌ها نتیجه دارند!",ko_note_missing:"نتایج را در زبانه بازی‌ها وارد کنید و روی ساخت جدول کلیک کنید. هنوز نتایج ناقص است — با این حال می‌توانید بسازید.",prompt_clear:"نتایج کدام هفته پاک شود؟ ۱، ۲ یا ۳ را بنویسید:"},
+ ja:{title:"2026 ワールドカップ",subtitle:"アメリカ · カナダ · メキシコ — 結果・順位・シミュレーター · ブラジリア時間",nav_standings:"📊 順位表",nav_matches:"📅 試合と日程",nav_ko:"🔮 ノックアウト・シミュレーター",standings_title:"12グループの順位表",legend_q12:"1位・2位 — 突破",legend_q3:"3位 — 突破の可能性（上位8）",legend_crit:"基準: 勝点 · 得失差 · 得点",matches_title:"試合と日程",updated_until:"公式結果（FIFA）の入力済み日付:",updated_value:"2026年6月22日（第2節終了時点）",btn_update:"🔄 結果を更新",note_matches:"終了した試合のスコアは公式結果で入力済みです。修正やシミュレーションのため任意のスコアを編集できます — すべてブラウザに自動保存されます。",all_rounds:"全節",round_label:"第{n}節",all_groups:"全グループ",all_teams:"全チーム",clear_round:"ある節のスコアを消去…",ko_title:"ノックアウト・シミュレーター",ko_seed:"⚙️ 順位表からトーナメント表を作成",ko_reset:"予想を消去",ko_click:"チームをクリックして勝ち上がらせます。",modal_body:"このアプリは<b>オフライン</b>で動作し、PCのファイルから直接実行されます。安全のため、ローカルファイルが単独でFIFAのライブデータを取得することはできません。更新はClaudeが行います:「結果を更新して」と頼んでください。",modal_ok:"了解",modal_text:"公式結果は<b>{date}</b>まで入力済み — グループステージ72試合中{n}試合にスコアがあります。",footer_main:"ワールドカップ2026アプリ · MacとWindowsでオフライン動作 · データはローカル保存。",footer_source:"公式結果の出典:",group:"グループ",th:["チーム","試","勝","分","負","得","失","差","点"],no_matches:"この条件の試合はありません。",no_bracket:"トーナメント表はまだ作成されていません。",tbd:"未定",final:"決勝",third_place:"3位決定戦",champion_label:"🏆 2026 世界王者",r32:"ベスト32",r16:"ベスト16",qf:"準々決勝",sf:"準決勝",ko_note_seeded:"トーナメント表を作成しました。各対戦でチームをクリックして決勝まで勝ち上がらせます。<i>順位により32チーム（1位12・2位12・3位上位8）を使用 — 近似シミュレーションです。</i>",ko_note_ok:"「試合」タブでスコアを入力し、トーナメント表を作成を押してください。全試合にスコアがあります!",ko_note_missing:"「試合」タブでスコアを入力し、トーナメント表を作成を押してください。スコア未入力の試合があります — それでも作成できます。",prompt_clear:"どの節のスコアを消去しますか? 1・2・3を入力:"},
+ ko:{title:"2026 월드컵",subtitle:"미국 · 캐나다 · 멕시코 — 결과·순위·시뮬레이터 · 브라질리아 시간",nav_standings:"📊 순위",nav_matches:"📅 경기 및 일정",nav_ko:"🔮 토너먼트 시뮬레이터",standings_title:"12개 조 순위",legend_q12:"1·2위 — 진출",legend_q3:"3위 — 진출 가능(상위 8)",legend_crit:"기준: 승점 · 득실차 · 득점",matches_title:"경기 및 일정",updated_until:"공식 결과(FIFA) 입력 기준일:",updated_value:"2026년 6월 22일(2차전 종료)",btn_update:"🔄 결과 업데이트",note_matches:"치러진 경기의 스코어는 공식 결과로 미리 입력되어 있습니다. 수정이나 시뮬레이션을 위해 어떤 스코어든 편집할 수 있으며, 모두 브라우저에 자동 저장됩니다.",all_rounds:"모든 차전",round_label:"{n}차전",all_groups:"모든 조",all_teams:"모든 팀",clear_round:"한 차전 스코어 지우기…",ko_title:"토너먼트 시뮬레이터",ko_seed:"⚙️ 순위로 대진표 만들기",ko_reset:"예측 지우기",ko_click:"팀을 클릭하면 진출합니다.",modal_body:"이 앱은 <b>오프라인</b>으로 작동하며 컴퓨터의 파일에서 바로 실행됩니다. 보안상 로컬 파일이 스스로 FIFA 실시간 데이터를 가져올 수 없습니다. 그래서 업데이트는 Claude가 합니다: \"결과 업데이트해줘\"라고 요청하세요.",modal_ok:"확인",modal_text:"공식 결과는 <b>{date}</b>까지 입력됨 — 조별리그 72경기 중 {n}경기에 스코어가 있습니다.",footer_main:"월드컵 2026 앱 · Mac과 Windows에서 오프라인 작동 · 데이터는 로컬 저장.",footer_source:"공식 결과 출처:",group:"조",th:["팀","경기","승","무","패","득","실","득실","승점"],no_matches:"해당 필터의 경기가 없습니다.",no_bracket:"아직 대진표가 생성되지 않았습니다.",tbd:"미정",final:"결승",third_place:"3·4위전",champion_label:"🏆 2026 세계 챔피언",r32:"32강",r16:"16강",qf:"8강",sf:"준결승",ko_note_seeded:"대진표가 생성되었습니다. 각 대결에서 팀을 클릭하면 결승까지 진출합니다. <i>순위에 따라 32개 팀(1위 12, 2위 12, 최고 3위 8)을 사용 — 근사 시뮬레이션입니다.</i>",ko_note_ok:"경기 탭에서 스코어를 입력하고 대진표 만들기를 누르세요. 모든 경기에 스코어가 있습니다!",ko_note_missing:"경기 탭에서 스코어를 입력하고 대진표 만들기를 누르세요. 일부 경기는 스코어가 없지만 그래도 만들 수 있습니다.",prompt_clear:"어느 차전의 스코어를 지울까요? 1, 2 또는 3 입력:"},
+ uz:{title:"2026 Jahon chempionati",subtitle:"AQSh · Kanada · Meksika — Natijalar, jadval va simulyator · Brazilia vaqti",nav_standings:"📊 Jadval",nav_matches:"📅 Oʻyinlar va sanalar",nav_ko:"🔮 Chiqaruv simulyatori",standings_title:"12 guruh jadvali",legend_q12:"1- va 2-oʻrin — yoʻliqdi",legend_q3:"3-oʻrin — oʻtishi mumkin (eng yaxshi 8)",legend_crit:"Mezonlar: Ochko · Gol farqi · Urilgan gol",matches_title:"Oʻyinlar va sanalar",updated_until:"Rasmiy natijalar (FIFA) toʻldirilgan sana:",updated_value:"2026-yil 22-iyun (2-tur yakuni)",btn_update:"🔄 Natijalarni yangilash",note_matches:"Oʻtkazilgan oʻyinlar hisobi rasmiy natijalar bilan oldindan toʻldirilgan. Tuzatish yoki simulyatsiya uchun istalgan hisobni tahrirlang — hammasi brauzeringizda avtomatik saqlanadi.",all_rounds:"Barcha turlar",round_label:"{n}-tur",all_groups:"Barcha guruhlar",all_teams:"Barcha jamoalar",clear_round:"Bir tur hisobini tozalash…",ko_title:"Chiqaruv bosqichi simulyatori",ko_seed:"⚙️ Jadvaldan setka tuzish",ko_reset:"Bashoratlarni tozalash",ko_click:"Jamoani keyingi bosqichga oʻtkazish uchun bosing.",modal_body:"Bu ilova <b>oflayn</b> ishlaydi va kompyuteringizdagi fayldan toʻgʻridan-toʻgʻri ishga tushadi. Xavfsizlik uchun mahalliy fayl FIFA jonli maʼlumotlarini oʻzi ololmaydi. Yangilashni Claude qiladi: \"natijalarni yangila\" deb soʻrang.",modal_ok:"Tushunarli",modal_text:"Rasmiy natijalar <b>{date}</b> gacha toʻldirilgan — guruh bosqichidagi 72 oʻyindan {n} tasi hisobga ega.",footer_main:"2026 Jahon chempionati ilovasi · Mac va Windowsda oflayn ishlaydi · maʼlumotlar mahalliy saqlanadi.",footer_source:"Natijalarning rasmiy manbasi:",group:"Guruh",th:["Jamoa","Oʻ","Gʻ","D","M","UG","OG","GF","Och"],no_matches:"Bu filtrlar boʻyicha oʻyin yoʻq.",no_bracket:"Setka hali tuzilmagan.",tbd:"Aniqlanadi",final:"Final",third_place:"3-oʻrin uchun",champion_label:"🏆 2026 Jahon chempioni",r32:"1/16 final",r16:"1/8 final",qf:"Chorak final",sf:"Yarim final",ko_note_seeded:"Setka tuzildi. Har juftlikda jamoani bosib finalgacha olib boring. <i>Reyting boʻyicha 32 yoʻliqqan jamoa (12 birinchi, 12 ikkinchi va eng yaxshi 8 uchinchi) ishlatiladi — taxminiy simulyatsiya.</i>",ko_note_ok:"Oʻyinlar boʻlimida hisoblarni kiriting va Setka tuzishni bosing. Barcha oʻyinlar hisobga ega!",ko_note_missing:"Oʻyinlar boʻlimida hisoblarni kiriting va Setka tuzishni bosing. Baʼzi oʻyinlar hisobsiz — baribir tuzishingiz mumkin.",prompt_clear:"Qaysi tur hisobi tozalansin? 1, 2 yoki 3 ni kiriting:"}
+};
+// títulos do toast (próximos / últimos) por idioma
+const TOAST={pt:["Próximos jogos","Últimos resultados"],en:["Upcoming matches","Latest results"],
+  es:["Próximos partidos","Últimos resultados"],fr:["Prochains matchs","Derniers résultats"],
+  de:["Nächste Spiele","Letzte Ergebnisse"],nl:["Volgende wedstrijden","Laatste uitslagen"],
+  it:["Prossime partite","Ultimi risultati"],hr:["Sljedeće utakmice","Posljednji rezultati"],
+  no:["Kommende kamper","Siste resultater"],sv:["Kommande matcher","Senaste resultaten"],
+  cs:["Nadcházející zápasy","Poslední výsledky"],bs:["Naredne utakmice","Posljednji rezultati"],
+  tr:["Yaklaşan maçlar","Son sonuçlar"],ar:["المباريات القادمة","آخر النتائج"],
+  fa:["بازی‌های بعدی","آخرین نتایج"],ja:["次の試合","最新の結果"],
+  ko:["다가오는 경기","최근 결과"],uz:["Keyingi oʻyinlar","Soʻnggi natijalar"]};
+for(const c in I18N){ const tt=TOAST[c]||TOAST.en; I18N[c].toast_next=tt[0]; I18N[c].toast_recent=tt[1]; }
+// legenda da repescagem (melhores 3ºs) no simulador
+const KO3={pt:"Repescagem — melhores 3ºs colocados",en:"Best third-placed teams (play-in)",
+  es:"Repechaje — mejores terceros",fr:"Repêchage — meilleurs 3es",de:"Beste Gruppendritte",
+  nl:"Beste nummers drie",it:"Ripescaggio — migliori terze",hr:"Najbolji trećeplasirani",
+  no:"Beste treere",sv:"Bästa treor",cs:"Nejlepší týmy na 3. místě",bs:"Najbolji trećeplasirani",
+  tr:"En iyi 3.lük takımları",ar:"أفضل المنتخبات في المركز الثالث",fa:"بهترین تیم‌های سوم",
+  ja:"各組3位のベスト8",ko:"최고 3위 팀",uz:"Eng yaxshi uchinchi oʻrin jamoalari"};
+for(const c in I18N){ I18N[c].ko_third_legend = KO3[c]||KO3.en; }
+// remove o emoji 🔄 do rótulo do botão (usamos um ícone SVG limpo no lugar)
+for(const c in I18N){ if(I18N[c].btn_update) I18N[c].btn_update = I18N[c].btn_update.replace(/^🔄\s*/,""); }
+// textos novos (ranking, simular, limpar, última edição). Idiomas sem entrada caem para inglês.
+const EXTRA={
+ pt:{your_update:"Sua última edição:",nav_ranking:"🏅 Ranking FIFA",ranking_title:"Ranking FIFA das seleções",ranking_sub:"Ranking aproximado das 48 seleções, usado como base para a simulação. Clique em “Simular” para preencher automaticamente os jogos que ainda não aconteceram (e o mata-mata) com base nesse ranking.",btn_simulate:"🎲 Simular jogos restantes",clear_future:"🧹 Limpar o que ainda não aconteceu",sim_tag:"sim",sim_done:"Pronto! Os jogos restantes foram simulados pelo ranking e o mata-mata já foi montado e avançado automaticamente. Abra a aba “Simulador (Mata-mata)” para ver e ajustar os confrontos clicando nas seleções."},
+ en:{your_update:"Your last edit:",nav_ranking:"🏅 FIFA Ranking",ranking_title:"FIFA ranking of teams",ranking_sub:"Approximate ranking of the 48 teams, used as the basis for the simulation. Click “Simulate” to auto-fill the matches that haven't happened yet (and the knockout) based on this ranking.",btn_simulate:"🎲 Simulate remaining matches",clear_future:"🧹 Clear what hasn't happened",sim_tag:"sim",sim_done:"Done! The remaining matches were simulated by ranking and the knockout bracket was built and auto-advanced. Open the “Knockout Simulator” tab to see and adjust the ties by clicking the teams."},
+ es:{your_update:"Tu última edición:",nav_ranking:"🏅 Ranking FIFA",ranking_title:"Ranking FIFA de selecciones",ranking_sub:"Ranking aproximado de las 48 selecciones, base de la simulación. Pulsa “Simular” para rellenar los partidos que aún no se jugaron (y la eliminatoria) según este ranking.",btn_simulate:"🎲 Simular partidos restantes",clear_future:"🧹 Borrar lo que aún no pasó",sim_tag:"sim",sim_done:"¡Listo! Los partidos restantes se simularon por ranking y la eliminatoria ya se armó y avanzó. Abre la pestaña “Simulador” para ver y ajustar los cruces."},
+ fr:{your_update:"Votre dernière modif. :",nav_ranking:"🏅 Classement FIFA",ranking_title:"Classement FIFA des équipes",ranking_sub:"Classement approximatif des 48 équipes, base de la simulation. Cliquez sur « Simuler » pour remplir les matchs pas encore joués (et la phase finale) selon ce classement.",btn_simulate:"🎲 Simuler les matchs restants",clear_future:"🧹 Effacer ce qui n'a pas eu lieu",sim_tag:"sim",sim_done:"Terminé ! Les matchs restants ont été simulés selon le classement et le tableau final a été construit et avancé. Ouvrez l'onglet « Simulateur »."},
+ de:{your_update:"Deine letzte Änderung:",nav_ranking:"🏅 FIFA-Rangliste",ranking_title:"FIFA-Rangliste der Teams",ranking_sub:"Ungefähre Rangliste der 48 Teams als Basis der Simulation. Klicke auf „Simulieren“, um noch nicht gespielte Spiele (und das K.o.) anhand dieser Rangliste auszufüllen.",btn_simulate:"🎲 Restliche Spiele simulieren",clear_future:"🧹 Noch nicht Gespieltes löschen",sim_tag:"Sim",sim_done:"Fertig! Die restlichen Spiele wurden nach Rangliste simuliert und das K.-o.-Tableau erstellt. Öffne den Tab „K.-o.-Simulator“."},
+ it:{your_update:"Ultima modifica:",nav_ranking:"🏅 Ranking FIFA",ranking_title:"Ranking FIFA delle nazionali",ranking_sub:"Ranking approssimativo delle 48 nazionali, base della simulazione. Clicca su “Simula” per riempire le partite non ancora giocate (e la fase a eliminazione) in base a questo ranking.",btn_simulate:"🎲 Simula le partite restanti",clear_future:"🧹 Cancella ciò che non è successo",sim_tag:"sim",sim_done:"Fatto! Le partite restanti sono state simulate per ranking e il tabellone è stato costruito. Apri la scheda “Simulatore”."}
+};
+for(const c in I18N){ Object.assign(I18N[c], EXTRA[c]||EXTRA.en); }
+// nota do simulador agora reflete o chaveamento OFICIAL (substitui o texto "por ranking")
+const KO_NOTE={
+ pt:"Chaveamento oficial da FIFA. As 32 classificadas ocupam as posições reais (ex.: 1º C × 2º F). Clique numa seleção em cada confronto para avançá-la até a final.",
+ en:"Official FIFA bracket. The 32 qualified teams take their real positions (e.g. 1C vs 2F). Click a team in each tie to advance it to the final.",
+ es:"Cuadro oficial de la FIFA. Las 32 clasificadas ocupan sus posiciones reales (p. ej. 1C vs 2F). Pulsa una selección en cada cruce para llevarla a la final.",
+ fr:"Tableau officiel de la FIFA. Les 32 qualifiés occupent leurs vraies positions (ex. 1C vs 2F). Cliquez sur une équipe pour l'amener en finale.",
+ de:"Offizielles FIFA-Tableau. Die 32 Qualifizierten stehen auf ihren echten Positionen (z. B. 1C vs 2F). Klicke ein Team an, um es ins Finale zu bringen.",
+ it:"Tabellone ufficiale FIFA. Le 32 qualificate occupano le posizioni reali (es. 1C vs 2F). Clicca una squadra per portarla in finale."
+};
+for(const c in I18N){ I18N[c].ko_note_seeded = KO_NOTE[c]||KO_NOTE.en; }
+// aviso quando se tenta gerar o chaveamento manualmente com jogos faltando
+const NEED={
+ pt:"Ainda há jogos da fase de grupos sem placar. Preencha todos os resultados — ou use “🎲 Simular jogos restantes” na aba Ranking FIFA — para gerar o chaveamento.",
+ en:"There are still group-stage matches without a score. Fill in all results — or use “🎲 Simulate remaining matches” on the FIFA Ranking tab — to generate the bracket.",
+ es:"Aún hay partidos de la fase de grupos sin marcador. Completa todos los resultados — o usa “🎲 Simular partidos restantes” en la pestaña Ranking FIFA — para generar el cuadro.",
+ fr:"Il reste des matchs de groupes sans score. Renseignez tous les résultats — ou utilisez « 🎲 Simuler les matchs restants » dans l'onglet Classement FIFA — pour générer le tableau.",
+ de:"Es gibt noch Gruppenspiele ohne Ergebnis. Trage alle Ergebnisse ein — oder nutze „🎲 Restliche Spiele simulieren“ im Tab FIFA-Rangliste — um das Tableau zu erstellen.",
+ it:"Ci sono ancora partite dei gironi senza punteggio. Inserisci tutti i risultati — o usa “🎲 Simula le partite restanti” nella scheda Ranking FIFA — per generare il tabellone."
+};
+for(const c in I18N){ I18N[c].ko_need_complete = NEED[c]||NEED.en; }
+const KOSIM={pt:"🎲 Simular mata-mata",en:"🎲 Simulate knockout",es:"🎲 Simular eliminatoria",fr:"🎲 Simuler la phase finale",de:"🎲 K.-o. simulieren",it:"🎲 Simula la fase finale"};
+for(const c in I18N){ I18N[c].ko_sim_bracket = KOSIM[c]||KOSIM.en; }
+const KOPANEL={pt:["Resultados do mata-mata","Pênaltis"],en:["Knockout results","Penalties"],es:["Resultados de la eliminatoria","Penales"],fr:["Résultats de la phase finale","Tirs au but"],de:["K.-o.-Ergebnisse","Elfmeter"],it:["Risultati della fase finale","Rigori"]};
+for(const c in I18N){ const x=KOPANEL[c]||KOPANEL.en; I18N[c].ko_panel_title=x[0]; I18N[c].pen=x[1]; }
+const NAVSTUDIO={pt:"🎓 Estúdio",en:"🎓 Studio",es:"🎓 Estudio",fr:"🎓 Studio",de:"🎓 Studio",it:"🎓 Studio"};
+for(const c in I18N){ I18N[c].nav_studio = NAVSTUDIO[c]||NAVSTUDIO.en; }
+const LIVET={pt:"AO VIVO",en:"LIVE",es:"EN VIVO",fr:"EN DIRECT",de:"LIVE",it:"LIVE",ja:"ライブ",ko:"라이브",ar:"مباشر",fa:"زنده"};
+for(const c in I18N){ I18N[c].live_tag = LIVET[c]||LIVET.en; }
+// botão para mostrar/ocultar as datas já realizadas na lista de jogos
+const PAST={
+ pt:["▸ Ver {n} datas já realizadas","▾ Ocultar datas já realizadas"],
+ en:["▸ Show {n} past dates","▾ Hide past dates"],
+ es:["▸ Ver {n} fechas ya jugadas","▾ Ocultar fechas jugadas"],
+ fr:["▸ Voir {n} dates déjà jouées","▾ Masquer les dates passées"],
+ de:["▸ {n} vergangene Spieltage anzeigen","▾ Vergangene Spieltage ausblenden"],
+ it:["▸ Mostra {n} date già giocate","▾ Nascondi date giocate"]
+};
+for(const c in I18N){ const p=PAST[c]||PAST.en; I18N[c].see_past=p[0]; I18N[c].hide_past=p[1]; }
+// seção de doação (Pix) — Projeto Social Garapuvu
+const DON={
+ pt:["❤️ Apoie o projeto","Doe via Pix ao Projeto Social Garapuvu","Aponte a câmera do seu banco para o QR Code","Copiar código Pix","Copiado!","🔗 Site do projeto","Transparência: o Projeto Social Garapuvu é uma iniciativa independente e sem fins lucrativos, ainda não registrada como pessoa jurídica nem cadastrada na Prefeitura de Florianópolis — portanto não possui CNPJ e as doações não são dedutíveis no Imposto de Renda. As contribuições são voluntárias e recebidas na conta pessoal (Banco do Brasil) do instrutor Douglas, sendo aplicadas integralmente nas atividades do projeto. A prestação de contas (valores recebidos e como são usados) é publicada no site do projeto. Ao doar, você concorda que se trata de uma doação voluntária, sem contrapartida."],
+ en:["❤️ Support the project","Donate via Pix to the Garapuvu Social Project","Point your bank app camera at the QR Code","Copy Pix code","Copied!","🔗 Project website","Transparency: the Garapuvu Social Project is an independent, non-profit initiative, not yet registered as a legal entity nor with the Florianópolis city government — so it has no CNPJ and donations are not tax-deductible. Contributions are voluntary and received in instructor Douglas's personal account (Banco do Brasil), used entirely for the project's activities. Reports of amounts received and how they are used are published on the project website. By donating, you agree it is a voluntary gift with nothing in return."],
+ es:["❤️ Apoya el proyecto","Dona vía Pix al Proyecto Social Garapuvu","Apunta la cámara de tu banco al código QR","Copiar código Pix","¡Copiado!","🔗 Sitio del proyecto","Transparencia: el Proyecto Social Garapuvu es una iniciativa independiente y sin fines de lucro, aún no registrada como persona jurídica ni ante la alcaldía de Florianópolis — por lo tanto no tiene CNPJ y las donaciones no son deducibles de impuestos. Las contribuciones son voluntarias y se reciben en la cuenta personal (Banco do Brasil) del instructor Douglas, y se aplican íntegramente a las actividades del proyecto. La rendición de cuentas se publica en el sitio del proyecto."],
+ fr:["❤️ Soutenez le projet","Faites un don via Pix au Projet Social Garapuvu","Visez le QR Code avec l'appli de votre banque","Copier le code Pix","Copié !","🔗 Site du projet","Transparence : le Projet Social Garapuvu est une initiative indépendante et à but non lucratif, pas encore enregistrée comme personne morale ni auprès de la mairie de Florianópolis — il n'a donc pas de CNPJ et les dons ne sont pas déductibles des impôts. Les contributions sont volontaires et reçues sur le compte personnel (Banco do Brasil) de l'instructeur Douglas, et utilisées entièrement pour le projet. Les comptes sont publiés sur le site du projet."],
+ de:["❤️ Projekt unterstützen","Spende via Pix an das Sozialprojekt Garapuvu","Richte die Bank-App-Kamera auf den QR-Code","Pix-Code kopieren","Kopiert!","🔗 Projekt-Website","Transparenz: Das Sozialprojekt Garapuvu ist eine unabhängige, gemeinnützige Initiative, noch nicht als juristische Person oder bei der Stadtverwaltung von Florianópolis registriert — es hat daher keine CNPJ und Spenden sind nicht steuerlich absetzbar. Beiträge sind freiwillig und gehen auf das Privatkonto (Banco do Brasil) des Ausbilders Douglas, vollständig für das Projekt verwendet. Die Abrechnung wird auf der Projekt-Website veröffentlicht."],
+ it:["❤️ Sostieni il progetto","Dona via Pix al Progetto Sociale Garapuvu","Inquadra il QR con l'app della tua banca","Copia il codice Pix","Copiato!","🔗 Sito del progetto","Trasparenza: il Progetto Sociale Garapuvu è un'iniziativa indipendente e senza scopo di lucro, non ancora registrata come persona giuridica né presso il Comune di Florianópolis — quindi non ha CNPJ e le donazioni non sono detraibili. I contributi sono volontari e ricevuti sul conto personale (Banco do Brasil) dell'istruttore Douglas, usati interamente per il progetto. La rendicontazione è pubblicata sul sito del progetto."]
+};
+for(const c in I18N){ const x=DON[c]||DON.en; I18N[c].donate_title=x[0];I18N[c].donate_sub=x[1];I18N[c].donate_hint=x[2];I18N[c].pix_copy=x[3];I18N[c].pix_copied=x[4];I18N[c].project_link=x[5];I18N[c].donate_transparency=x[6]; }
+// "onde assistir" (canais oficiais listados pela FIFA para o Brasil)
+const WATCH={pt:"📺 Onde assistir (Brasil):",en:"📺 Where to watch (Brazil):",es:"📺 Dónde ver (Brasil):",
+  fr:"📺 Où regarder (Brésil) :",de:"📺 Wo schauen (Brasilien):",it:"📺 Dove vedere (Brasile):"};
+for(const c in I18N){ I18N[c].watch_label = WATCH[c]||WATCH.en; }
+// aba de estatísticas
+const STAT={
+ pt:["📈 Estatísticas","Power Rankings — craques (Ataque · Criatividade · Defesa)","Artilheiros","Estatísticas por seleção","Estatísticas oficiais da FIFA, atualizadas até a 2ª rodada (21/06/2026).","Jogador","Estatísticas oficiais da FIFA carregadas até 21/06/2026 (Power Rankings, artilheiros e dados por seleção). Para buscar números mais recentes, peça ao Claude para atualizar."],
+ en:["📈 Statistics","Power Rankings — top players (Attack · Creativity · Defence)","Top scorers","Team statistics","Official FIFA statistics, updated through matchday 2 (21 Jun 2026).","Player","Official FIFA statistics loaded through 21 Jun 2026 (Power Rankings, top scorers and team data). To fetch newer numbers, ask Claude to update."],
+ es:["📈 Estadísticas","Power Rankings — cracks (Ataque · Creatividad · Defensa)","Goleadores","Estadísticas por selección","Estadísticas oficiales de la FIFA, actualizadas hasta la 2ª jornada (21/06/2026).","Jugador","Estadísticas oficiales de la FIFA cargadas hasta 21/06/2026. Para datos más recientes, pide a Claude que actualice."],
+ fr:["📈 Statistiques","Power Rankings — meilleurs joueurs (Attaque · Créativité · Défense)","Buteurs","Statistiques par équipe","Statistiques officielles de la FIFA, à jour jusqu'à la 2e journée (21/06/2026).","Joueur","Statistiques officielles de la FIFA chargées jusqu'au 21/06/2026. Pour des chiffres plus récents, demandez à Claude."],
+ de:["📈 Statistiken","Power Rankings — Topspieler (Angriff · Kreativität · Abwehr)","Torschützen","Team-Statistiken","Offizielle FIFA-Statistiken, Stand 2. Spieltag (21.06.2026).","Spieler","Offizielle FIFA-Statistiken bis 21.06.2026 geladen. Für neuere Zahlen bitte Claude um ein Update."],
+ it:["📈 Statistiche","Power Rankings — migliori giocatori (Attacco · Creatività · Difesa)","Marcatori","Statistiche per squadra","Statistiche ufficiali FIFA, aggiornate alla 2ª giornata (21/06/2026).","Giocatore","Statistiche ufficiali FIFA caricate fino al 21/06/2026. Per dati più recenti, chiedi a Claude."]
+};
+for(const c in I18N){ const x=STAT[c]||STAT.en; I18N[c].nav_stats=x[0];I18N[c].st_power=x[1];I18N[c].st_scorers=x[2];I18N[c].st_teams=x[3];I18N[c].st_note=x[4];I18N[c].th_player=x[5];I18N[c].st_done=x[6]; }
+const ASST={pt:"Assistências",en:"Assists",es:"Asistencias",fr:"Passes décisives",de:"Vorlagen",it:"Assist",hr:"Asistencije",no:"Målgivende",sv:"Assist",cs:"Asistence",bs:"Asistencije",tr:"Asist",ar:"التمريرات الحاسمة",fa:"پاس گل",ja:"アシスト",ko:"도움",uz:"Assistlar"};
+for(const c in I18N){ I18N[c].st_assists = ASST[c]||ASST.en; }
+let showPastDates=false;
+// fuso horário representativo por idioma (para exibir os horários no fuso do país)
+const TZ={pt:"America/Sao_Paulo",en:"America/New_York",es:"America/Mexico_City",fr:"Europe/Paris",
+  de:"Europe/Berlin",nl:"Europe/Amsterdam",it:"Europe/Rome",hr:"Europe/Zagreb",no:"Europe/Oslo",
+  sv:"Europe/Stockholm",cs:"Europe/Prague",bs:"Europe/Sarajevo",tr:"Europe/Istanbul",ar:"Asia/Riyadh",
+  fa:"Asia/Tehran",ja:"Asia/Tokyo",ko:"Asia/Seoul",uz:"Asia/Tashkent"};
+// ranking FIFA aproximado das 48 seleções (1 = melhor) — base da simulação
+const RANK={"Argentina":1,"França":2,"Espanha":3,"Inglaterra":4,"Brasil":5,"Portugal":6,"Países Baixos":7,
+  "Bélgica":8,"Alemanha":9,"Croácia":10,"Marrocos":11,"Colômbia":12,"Uruguai":13,"Estados Unidos":14,
+  "México":15,"Suíça":16,"Japão":17,"Senegal":18,"Irã":19,"Coreia do Sul":20,"Áustria":21,"Austrália":22,
+  "Equador":23,"Turquia":24,"Suécia":25,"Canadá":26,"Egito":27,"Noruega":28,"Panamá":29,"Costa do Marfim":30,
+  "Catar":31,"Escócia":32,"Argélia":33,"Paraguai":34,"Tunísia":35,"Bósnia-Herzegovina":36,"Cabo Verde":37,
+  "RD Congo":38,"Arábia Saudita":39,"República Tcheca":40,"Uzbequistão":41,"Iraque":42,"Jordânia":43,
+  "Gana":44,"Nova Zelândia":45,"África do Sul":46,"Curaçao":47,"Haiti":48};
+let LANG = localStorage.getItem("copa2026_lang") || "pt";
+if(!I18N[LANG]) LANG = "pt";
+function t(key){
+  const v = (I18N[LANG]&&I18N[LANG][key]) ?? I18N.en[key] ?? I18N.pt[key];
+  return v==null ? key : v;
+}
+function thLabels(){ return (I18N[LANG]&&I18N[LANG].th) || I18N.en.th; }
+function applyI18n(){
+  const html=document.documentElement;
+  html.lang=LANG; html.dir=RTL.has(LANG)?"rtl":"ltr";
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent=t(el.getAttribute("data-i18n")); });
+  document.querySelectorAll("[data-i18n-html]").forEach(el=>{ el.innerHTML=t(el.getAttribute("data-i18n-html")); });
+  document.title = t("title")+" — "+t("nav_standings").replace(/^\W+\s*/,"");
+  const lu=document.getElementById("last-update"); if(lu) lu.textContent=t("updated_value");
+  populateFilters();
+  renderStandings(); renderMatches(); renderKO(); renderToast(); renderRanking(); renderStats(); renderUserStamp();
+}
+
+/* ============================================================
+   TOAST — próximos 4 jogos e últimos 4 resultados
+   ============================================================ */
+function renderToast(){
+  const body=document.getElementById("toast-body"); if(!body) return;
+  document.getElementById("toast-title").textContent=t("matches_title");
+  const byTime=(a,b)=>(a.d+a.h).localeCompare(b.d+b.h);
+  const upcoming=STATE.matches.filter(m=>m.hs===null||m.as===null).sort(byTime).slice(0,4);
+  const played=STATE.matches.filter(m=>m.hs!==null&&m.as!==null&&!LIVE_IDS.has(m.id)).sort((a,b)=>byTime(b,a)).slice(0,4);
+  const row=(inner,dt)=>`<div class="t-row"><span class="nm">${inner}</span><span class="dt">${dt}</span></div>`;
+  let h=`<div class="t-sec">${t("toast_next")}</div>`;
+  h+= upcoming.length ? upcoming.map(m=>{const p=fmtParts(m);return row(
+        `${flag(m.home)} ${m.home} <span class="x">×</span> ${m.away} ${flag(m.away)}`,
+        `${p.dateLabel} ${p.time}`);}).join("")
+      : `<div class="t-row muted">—</div>`;
+  h+=`<div class="t-sec">${t("toast_recent")}</div>`;
+  h+= played.length ? played.map(m=>{const p=fmtParts(m);return row(
+        `${flag(m.home)} ${m.home} <span class="sc">${m.hs}×${m.as}</span> ${m.away} ${flag(m.away)}`,
+        p.dateLabel);}).join("")
+      : `<div class="t-row muted">—</div>`;
+  body.innerHTML=h;
+}
+
+/* ============================================================
+   CLASSIFICAÇÃO
+   ============================================================ */
+function computeStandings(){
+  const tbl = {};
+  for(const g in GROUPS){
+    tbl[g] = {};
+    GROUPS[g].forEach(t=>tbl[g][t]={team:t,P:0,J:0,V:0,E:0,D:0,GP:0,GC:0});
+  }
+  STATE.matches.forEach(mt=>{
+    if(mt.hs===null||mt.as===null) return;
+    const g=tbl[mt.g]; if(!g||!g[mt.home]||!g[mt.away]) return;
+    const H=g[mt.home], A=g[mt.away];
+    H.J++;A.J++; H.GP+=mt.hs;H.GC+=mt.as; A.GP+=mt.as;A.GC+=mt.hs;
+    if(mt.hs>mt.as){H.V++;A.D++;H.P+=3;}
+    else if(mt.hs<mt.as){A.V++;H.D++;A.P+=3;}
+    else{H.E++;A.E++;H.P++;A.P++;}
+  });
+  const ranked={};
+  for(const g in tbl){
+    ranked[g]=Object.values(tbl[g]).map(r=>({...r,SG:r.GP-r.GC}))
+      .sort(cmpTeam);
+  }
+  return ranked;
+}
+function cmpTeam(a,b){
+  return b.P-a.P || b.SG-a.SG || b.GP-a.GP || a.team.localeCompare(b.team);
+}
+// os 8 melhores terceiros
+function bestThirds(ranked){
+  const thirds=[];
+  for(const g in ranked){ if(ranked[g][2]) thirds.push({...ranked[g][2],grupo:g}); }
+  thirds.sort(cmpTeam);
+  return thirds;
+}
+
+function renderStandings(){
+  const ranked=computeStandings();
+  const thirds=bestThirds(ranked);
+  const top8=new Set(thirds.slice(0,8).map(t=>t.team+"|"+t.grupo));
+  const body=document.getElementById("standings-body");
+  body.innerHTML="";
+  for(const g in ranked){
+    const div=document.createElement("div");div.className="group";
+    let rows="";
+    ranked[g].forEach((r,i)=>{
+      let cls="";
+      if(i<2) cls="q"+(i+1);
+      else if(i===2 && top8.has(r.team+"|"+g)) cls="q3";
+      rows+=`<tr class="${cls}">
+        <td class="team"><span class="pos">${i+1}</span><span class="flag">${flag(r.team)}</span>${r.team}</td>
+        <td>${r.J}</td><td>${r.V}</td><td>${r.E}</td><td>${r.D}</td>
+        <td>${r.GP}</td><td>${r.GC}</td><td>${r.SG>0?"+":""}${r.SG}</td>
+        <td class="pts">${r.P}</td></tr>`;
+    });
+    const TH=thLabels();
+    const head=`<th style="text-align:${RTL.has(LANG)?'right':'left'}">${TH[0]}</th>`+TH.slice(1).map(x=>`<th>${x}</th>`).join("");
+    div.innerHTML=`<h3>${t("group")} ${g}</h3>
+      <table><thead><tr>${head}</tr></thead>
+      <tbody>${rows}</tbody></table>`;
+    body.appendChild(div);
+  }
+}
+
+/* ============================================================
+   JOGOS & DATAS
+   ============================================================ */
+const DOW=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const MON=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+function curTZ(){ return TZ[LANG]||"America/Sao_Paulo"; }
+function matchDT(mt){ return new Date(`${mt.d}T${mt.h}:00-03:00`); } // horário-base de Brasília (BRT)
+// FASE estimada pelo relógio (sem o minuto exato — o minuto preciso vem da FIFA via LIVE_INFO)
+function liveStatus(mt){
+  const e=(Date.now()-matchDT(mt).getTime())/60000; // minutos desde o início
+  if(e<0) return "";
+  if(e<=45) return "1º tempo";
+  if(e<=60) return "Intervalo";
+  if(e<=130) return "2º tempo";
+  return "";
+}
+// minuto/status PRECISO da FIFA (preenchido pela rotina automática), correndo em tempo real a partir da âncora.
+function liveLabel(mt){
+  const li=LIVE_INFO[mt.id];
+  if(li && typeof li==="object" && li.at){
+    if(li.h==="INT") return "Intervalo";
+    const m=li.m + Math.floor((Date.now()-li.at)/60000); // anda em tempo real desde a âncora
+    return m+"' · "+(li.h==="1T"?"1º tempo":"2º tempo");
+  }
+  if(typeof li==="string" && li) return li;
+  return liveStatus(mt);
+}
+// retorna data/hora do jogo já convertidas para o fuso do idioma selecionado
+function fmtParts(mt){
+  const dt=matchDT(mt), loc=LOCALE[LANG]||"pt-BR", tz=curTZ();
+  const dayKey=new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"}).format(dt);
+  const dateLabel=new Intl.DateTimeFormat(loc,{timeZone:tz,weekday:"short",day:"2-digit",month:"short"}).format(dt);
+  const time=new Intl.DateTimeFormat(loc,{timeZone:tz,hour:"2-digit",minute:"2-digit",hour12:false}).format(dt);
+  return {dayKey,dateLabel,time,dt};
+}
+function fmtDate(iso){const [y,mo,d]=iso.split("-").map(Number);const dt=new Date(Date.UTC(y,mo-1,d));
+  try{return new Intl.DateTimeFormat(LOCALE[LANG]||"pt-BR",{weekday:"short",day:"2-digit",month:"short",timeZone:"UTC"}).format(dt);}
+  catch(e){return `${DOW[dt.getUTCDay()]}, ${String(d).padStart(2,"0")} ${MON[mo-1]}`;}}
+
+function populateFilters(){
+  const fr=document.getElementById("f-round"), fg=document.getElementById("f-group"), ft=document.getElementById("f-team");
+  const vr=fr.value, vg=fg.value, vt=ft.value;
+  fr.innerHTML=""; fr.add(new Option(t("all_rounds"),""));
+  [1,2,3].forEach(n=>fr.add(new Option(t("round_label").replace("{n}",n),String(n))));
+  fg.innerHTML=""; fg.add(new Option(t("all_groups"),""));
+  Object.keys(GROUPS).forEach(g=>fg.add(new Option(t("group")+" "+g,g)));
+  ft.innerHTML=""; ft.add(new Option(t("all_teams"),""));
+  Object.keys(FLAGS).sort((a,b)=>a.localeCompare(b)).forEach(team=>ft.add(new Option(team,team)));
+  fr.value=vr; fg.value=vg; ft.value=vt;
+}
+function renderMatches(){
+  const fr=document.getElementById("f-round").value;
+  const fg=document.getElementById("f-group").value;
+  const ft=document.getElementById("f-team").value;
+  let list=STATE.matches.filter(mt=>
+    (!fr||String(mt.r)===fr)&&(!fg||mt.g===fg)&&(!ft||mt.home===ft||mt.away===ft));
+  const byDay={};
+  list.forEach(mt=>{const p=fmtParts(mt);(byDay[p.dayKey]=byDay[p.dayKey]||{label:p.dateLabel,items:[]}).items.push({mt,time:p.time,dt:p.dt});});
+  const body=document.getElementById("matches-body");
+  body.innerHTML="";
+  if(!list.length){body.innerHTML=`<p class="muted">${t("no_matches")}</p>`;return;}
+  const simSet=new Set(STATE.simIds||[]);
+  const keys=Object.keys(byDay).sort();
+  // "data já realizada" = todos os jogos do dia têm RESULTADO OFICIAL (jogos reais já ocorridos).
+  // Jogos futuros que o usuário preencher/simular NÃO colapsam — continuam visíveis.
+  const officialDone=(mt)=>{const b=BASE_MATCHES.find(x=>x.id===mt.id);return b&&b.hs!==null&&b.as!==null&&!LIVE_IDS.has(mt.id);};
+  const isPast=(k)=>byDay[k].items.every(it=>officialDone(it.mt));
+  const pastKeys=keys.filter(isPast);
+  // botão "ver mais" para as datas já realizadas (colapsadas por padrão)
+  if(pastKeys.length){
+    const bar=document.createElement("div");bar.className="show-past-bar";
+    bar.innerHTML=`<button class="btn" id="toggle-past">${showPastDates?("▾ "+t("hide_past")):("▸ "+t("see_past").replace("{n}",pastKeys.length))}</button>`;
+    body.appendChild(bar);
+    bar.querySelector("#toggle-past").addEventListener("click",()=>{showPastDates=!showPastDates;renderMatches();});
+  }
+  const toShow = showPastDates ? keys : keys.filter(k=>!isPast(k));
+  toShow.forEach(k=>{
+    const day=byDay[k];
+    const dg=document.createElement("div");dg.className="daygroup"+(isPast(k)?" past":"");
+    dg.innerHTML=`<h4>${day.label}</h4>`;
+    day.items.sort((a,b)=>a.dt-b.dt).forEach(({mt,time})=>{
+      const played=mt.hs!==null&&mt.as!==null;
+      const isSim=simSet.has(mt.id)&&played;
+      const el=document.createElement("div");
+      el.className="match"+(played?" played":"")+(isSim?" sim":"");
+      el.innerHTML=`
+        ${LIVE_IDS.has(mt.id)?`<div class="live-strip" data-live="${mt.id}">🔴 ${t("live_tag")}${liveLabel(mt)?" · "+liveLabel(mt):""}</div><div class="live-watch">🕒 ${time} · ${t("watch_label")} ${CHANNELS.join(" · ")}</div>`:""}
+        <div class="meta">${time}<br><span class="grp-badge">${t("group")} ${mt.g}</span>${isSim?` <span class="sim-badge">${t("sim_tag")}</span>`:""}<br>${mt.c}</div>
+        <div class="t-home"><span class="flag">${flag(mt.home)}</span>${mt.home}</div>
+        <div class="score">
+          <input class="sc" type="number" inputmode="numeric" min="0" max="99" data-id="${mt.id}" data-side="hs" value="${mt.hs??""}">
+          <span class="x">×</span>
+          <input class="sc" type="number" inputmode="numeric" min="0" max="99" data-id="${mt.id}" data-side="as" value="${mt.as??""}">
+        </div>
+        <div class="t-away">${mt.away}<span class="flag">${flag(mt.away)}</span></div>
+        <div></div>`;
+      dg.appendChild(el);
+    });
+    body.appendChild(dg);
+  });
+  body.querySelectorAll("input.sc").forEach(inp=>{
+    inp.addEventListener("input",e=>{
+      const id=+e.target.dataset.id, side=e.target.dataset.side;
+      const mt=STATE.matches.find(x=>x.id===id);
+      const v=e.target.value===""?null:Math.max(0,Math.min(99,parseInt(e.target.value)||0));
+      mt[side]=v;
+      saveState(); renderStandings(); renderToast();
+    });
+  });
+}
+
+/* ============================================================
+   SIMULADOR DO MATA-MATA (32 classificados)
+   ============================================================ */
+// chaveamento OFICIAL da FIFA 2026 — cada confronto dos 16-avos por posição no grupo
+// t:'1'=1º do grupo, '2'=2º, '3'=melhor 3º vindo de um dos grupos do conjunto "from"
+const R32_SLOTS=[
+  {a:{t:'2',g:'A'},b:{t:'2',g:'B'}},
+  {a:{t:'1',g:'C'},b:{t:'2',g:'F'}},
+  {a:{t:'1',g:'E'},b:{t:'3',from:'ABCDF'}},
+  {a:{t:'1',g:'F'},b:{t:'2',g:'C'}},
+  {a:{t:'2',g:'E'},b:{t:'2',g:'I'}},
+  {a:{t:'1',g:'I'},b:{t:'3',from:'CDFGH'}},
+  {a:{t:'1',g:'A'},b:{t:'3',from:'CEFHI'}},
+  {a:{t:'1',g:'L'},b:{t:'3',from:'EHIJK'}},
+  {a:{t:'1',g:'G'},b:{t:'3',from:'AEHIJ'}},
+  {a:{t:'1',g:'D'},b:{t:'3',from:'BEFIJ'}},
+  {a:{t:'1',g:'H'},b:{t:'2',g:'J'}},
+  {a:{t:'2',g:'K'},b:{t:'2',g:'L'}},
+  {a:{t:'1',g:'B'},b:{t:'3',from:'EFGIJ'}},
+  {a:{t:'2',g:'D'},b:{t:'2',g:'G'}},
+  {a:{t:'1',g:'J'},b:{t:'2',g:'H'}},
+  {a:{t:'1',g:'K'},b:{t:'3',from:'DEIJL'}}
+];
+const R16_FROM=[[0,2],[1,4],[3,5],[6,7],[10,11],[8,9],[13,15],[12,14]];
+const QF_FROM=[[0,1],[4,5],[2,3],[6,7]];
+const SF_FROM=[[0,1],[2,3]];
+const RT={r32:"16-avos",r16:"Oitavas",qf:"Quartas",sf:"Semifinais"};
+// datas oficiais de cada fase (FIFA 2026)
+const RT_DATES={r32:"28/06 – 03/07",r16:"04 – 07/07",qf:"09 – 11/07",sf:"14 – 15/07",final:"19/07",third:"18/07"};
+
+function allGroupsComplete(){
+  return STATE.matches.every(mt=>mt.hs!==null&&mt.as!==null);
+}
+// 12 1ºs + 12 2ºs + 8 melhores 3ºs (lista de nomes) — para compat./ranking
+function getQualifiers(){
+  const ranked=computeStandings();
+  const winners=[],runners=[];
+  for(const g in ranked){winners.push(ranked[g][0]);runners.push(ranked[g][1]);}
+  const thirds=bestThirds(ranked).slice(0,8);
+  return {seed:[...winners,...runners,...thirds].map(t=>t.team), thirds:thirds.map(t=>t.team)};
+}
+// aloca os 8 melhores 3ºs às 8 vagas, respeitando os grupos elegíveis de cada vaga (oficial FIFA)
+function assignThirds(thirdsArr){
+  const slots=[];
+  R32_SLOTS.forEach((s,i)=>{const sp=s.b.t==='3'?s.b:(s.a.t==='3'?s.a:null); if(sp) slots.push({idx:i,groups:sp.from.split('')});});
+  const thirds=thirdsArr.map(t=>({team:t.team,g:t.grupo,used:false}));
+  const res={};
+  (function bt(si){
+    if(si===slots.length) return true;
+    for(const th of thirds){
+      if(!th.used && slots[si].groups.includes(th.g)){
+        th.used=true; res[slots[si].idx]=th.team;
+        if(bt(si+1)) return true;
+        th.used=false; delete res[slots[si].idx];
+      }
+    }
+    return false;
+  })(0);
+  return res;
+}
+// monta os 16 confrontos das oitavas-de-16 nas posições oficiais
+function buildSeed(){
+  const ranked=computeStandings();
+  const winners={},runners={};
+  for(const g in ranked){winners[g]=ranked[g][0].team;runners[g]=ranked[g][1].team;}
+  const thirdsArr=bestThirds(ranked).slice(0,8);
+  const assign=assignThirds(thirdsArr);
+  const resolve=(spec,i)=> spec.t==='1'?{team:winners[spec.g],label:'1'+spec.g}
+    : spec.t==='2'?{team:runners[spec.g],label:'2'+spec.g}
+    : {team:assign[i]||null,label:''};
+  const r32=R32_SLOTS.map((slot,i)=>{const A=resolve(slot.a,i),B=resolve(slot.b,i);return {a:A.team,b:B.team,la:A.label,lb:B.label};});
+  const seed=[...Object.values(winners),...Object.values(runners),...thirdsArr.map(t=>t.team)];
+  STATE.ko={r32, seed, thirds:thirdsArr.map(t=>t.team), picks:{}};
+}
+function buildBracket(){
+  if(!STATE.ko.r32) return null;
+  const win=(key,idx)=> STATE.ko.picks && STATE.ko.picks[key+"_"+idx];
+  const r32=STATE.ko.r32.map(p=>({a:p.a,b:p.b,la:p.la,lb:p.lb}));
+  const r16=R16_FROM.map(([i,j])=>({a:win("r32",i)||null,b:win("r32",j)||null}));
+  const qf =QF_FROM.map(([i,j])=>({a:win("r16",i)||null,b:win("r16",j)||null}));
+  const sf =SF_FROM.map(([i,j])=>({a:win("qf",i)||null,b:win("qf",j)||null}));
+  const final={a:win("sf",0)||null,b:win("sf",1)||null};
+  const loser=(i)=>{const w=win("sf",i); if(!w)return null; return w===sf[i].a?sf[i].b:sf[i].a;};
+  const third={a:loser(0),b:loser(1)};
+  return {r32,r16,qf,sf,final,third};
+}
+function renderKO(){
+  const note=document.getElementById("ko-note");
+  const seeded=!!STATE.ko.r32;
+  // chaveamento já existe → desabilita "Gerar" (evita reset acidental; use "Limpar palpites" para regerar)
+  const seedBtn=document.getElementById("ko-seed"); if(seedBtn) seedBtn.disabled=seeded;
+  const simBtn=document.getElementById("ko-sim"); if(simBtn) simBtn.disabled=!seeded; // só simula se já há chaveamento
+  const complete=allGroupsComplete();
+  note.innerHTML = seeded ? t("ko_note_seeded") : (complete ? t("ko_note_ok") : t("ko_note_missing"));
+  const brEl=document.getElementById("bracket");
+  const tfEl=document.getElementById("third-final");
+  const chEl=document.getElementById("champion-box");
+  const wrap=brEl.parentElement; const _sx=wrap?wrap.scrollLeft:0; // preserva a rolagem horizontal
+  brEl.innerHTML="";tfEl.innerHTML="";chEl.innerHTML="";
+  const b=buildBracket();
+  if(!b){brEl.innerHTML=`<p class="muted">${t("no_bracket")}</p>`;return;}
+  const cols=[["r32",b.r32],["r16",b.r16],["qf",b.qf],["sf",b.sf]];
+  cols.forEach(([key,ties])=>{
+    const col=document.createElement("div");col.className="round";
+    col.innerHTML=`<h5>${t(key)}<br><span class="rdate">${RT_DATES[key]||""}</span></h5>`;
+    ties.forEach((tie,idx)=>col.appendChild(tieEl(tie,key,idx)));
+    brEl.appendChild(col);
+  });
+  // coluna final
+  const colF=document.createElement("div");colF.className="round";
+  colF.innerHTML=`<h5>${t("final")}<br><span class="rdate">${RT_DATES.final}</span></h5>`;
+  colF.appendChild(tieEl(b.final,"final",0));
+  brEl.appendChild(colF);
+  // disputa de 3º
+  const wrap3=document.createElement("div");
+  wrap3.innerHTML=`<h5 style="color:var(--accent2);font-size:11px;text-transform:uppercase;margin:0 0 4px">${t("third_place")} <span class="rdate">${RT_DATES.third}</span></h5>`;
+  wrap3.appendChild(tieEl(b.third,"third",0));
+  tfEl.appendChild(wrap3);
+  // campeão
+  const champ=STATE.ko.picks&&STATE.ko.picks["final_0"];
+  if(champ){
+    chEl.innerHTML=`<div class="champion"><div class="lbl">${t("champion_label")}</div>
+      <div class="name"><span class="flag">${flag(champ)}</span> ${champ}</div></div>`;
+  }
+  renderKOPanel();
+  if(wrap) wrap.scrollLeft=_sx; // restaura a rolagem
+}
+// painel de RESULTADOS do mata-mata (placares editáveis, como em Jogos & Datas)
+function tieByKey(b,k){ const p=k.split("_"),r=p[0],i=+p[1]; if(r==="final")return b.final; if(r==="third")return b.third; return b[r][i]; }
+function clearDownstreamK(k){ const p=k.split("_"); clearDownstream(p[0],+p[1]); }
+function applyKoScoreWinner(k){
+  const sc=(STATE.ko.scores||{})[k]||{}; const tie=tieByKey(buildBracket(),k);
+  if(!tie||!tie.a||!tie.b) return;
+  STATE.ko.picks=STATE.ko.picks||{};
+  if(sc.hs!=null && sc.as!=null && sc.hs!==sc.as){
+    const w = sc.hs>sc.as ? tie.a : tie.b;
+    if(STATE.ko.picks[k]!==w){ STATE.ko.picks[k]=w; clearDownstreamK(k); }
+  } else { // sem placar ou empate → confronto indefinido (empate decide-se nos pênaltis)
+    if(STATE.ko.picks[k]){ delete STATE.ko.picks[k]; clearDownstreamK(k); }
+  }
+}
+function renderKOPanel(){
+  const el=document.getElementById("ko-matches"); if(!el) return;
+  const b=buildBracket();
+  if(!b){ el.innerHTML=""; return; }
+  const rounds=[["r32",b.r32],["r16",b.r16],["qf",b.qf],["sf",b.sf],["final",[b.final]],["third",[b.third]]];
+  let html=`<h3 class="ko-panel-title">${t("ko_panel_title")}</h3>`;
+  rounds.forEach(([key,ties])=>{
+    if(!ties.some(ti=>ti.a&&ti.b)) return; // rodada ainda sem confrontos definidos
+    const label = key==="final"?t("final"):key==="third"?t("third_place"):t(key);
+    html+=`<div class="daygroup"><h4>${label} <span class="rdate">${RT_DATES[key]||""}</span></h4>`;
+    ties.forEach((tie,idx)=>{
+      if(!tie.a||!tie.b) return;
+      const k=key+"_"+idx, sc=(STATE.ko.scores||{})[k]||{}, pick=(STATE.ko.picks||{})[k];
+      const isTie = sc.hs!=null && sc.as!=null && sc.hs===sc.as;
+      html+=`<div class="match ko-match">
+        <div class="t-home${pick===tie.a?' kowin':''}"><span class="flag">${flag(tie.a)}</span>${tie.a}</div>
+        <div class="score">
+          <input class="sc kosc" type="number" inputmode="numeric" min="0" max="99" data-k="${k}" data-side="hs" value="${sc.hs??""}">
+          <span class="x">×</span>
+          <input class="sc kosc" type="number" inputmode="numeric" min="0" max="99" data-k="${k}" data-side="as" value="${sc.as??""}">
+        </div>
+        <div class="t-away${pick===tie.b?' kowin':''}">${tie.b}<span class="flag">${flag(tie.b)}</span></div>
+        ${isTie?`<div class="pen-row">${t("pen")}: <button class="penbtn${pick===tie.a?' on':''}" data-k="${k}" data-team="a">${tie.a}</button><button class="penbtn${pick===tie.b?' on':''}" data-k="${k}" data-team="b">${tie.b}</button></div>`:``}
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+  el.innerHTML=html;
+  el.querySelectorAll("input.kosc").forEach(inp=>inp.addEventListener("input",e=>{
+    const k=e.target.dataset.k, side=e.target.dataset.side;
+    STATE.ko.scores=STATE.ko.scores||{}; const cur=STATE.ko.scores[k]||{};
+    cur[side]= e.target.value===""?null:Math.max(0,Math.min(99,parseInt(e.target.value)||0));
+    STATE.ko.scores[k]=cur; applyKoScoreWinner(k); saveState(); renderKO();
+  }));
+  el.querySelectorAll(".penbtn").forEach(btn=>btn.addEventListener("click",e=>{
+    const k=e.currentTarget.dataset.k, team=e.currentTarget.dataset.team;
+    const tie=tieByKey(buildBracket(),k); STATE.ko.picks=STATE.ko.picks||{};
+    STATE.ko.picks[k]= team==="a"?tie.a:tie.b; clearDownstreamK(k); saveState(); renderKO();
+  }));
+}
+function tieEl(tie,key,idx){
+  const div=document.createElement("div");div.className="tie";
+  const pick=STATE.ko.picks&&STATE.ko.picks[key+"_"+idx];
+  div.appendChild(slotEl(tie.a,tie.la,key,idx,pick));
+  div.appendChild(slotEl(tie.b,tie.lb,key,idx,pick));
+  return div;
+}
+function slotEl(team,label,key,idx,pick){
+  const s=document.createElement("div");
+  if(!team){s.className="slot empty";s.textContent=t("tbd");return s;}
+  const isThird = STATE.ko.thirds && STATE.ko.thirds.includes(team);
+  s.className="slot"+(pick===team?" win":"")+(isThird?" third-q":"");
+  const badge = isThird?`<span class="badge3" title="${t("ko_third_legend")}">3º</span>`:"";
+  s.innerHTML=`<span><span class="flag">${flag(team)}</span>${team}${badge}</span>`+(label?`<span class="seed">${label}</span>`:"");
+  s.addEventListener("click",()=>{
+    STATE.ko.picks=STATE.ko.picks||{};
+    STATE.ko.picks[key+"_"+idx]=team;
+    if(STATE.ko.scores) delete STATE.ko.scores[key+"_"+idx]; // escolha manual sem placar
+    clearDownstream(key,idx);
+    saveState();renderKO();
+  });
+  return s;
+}
+// ao mudar um vencedor, limpa rodadas seguintes dependentes
+function clearDownstream(key,idx){
+  const order=["r32","r16","qf","sf","final"];
+  const pos=order.indexOf(key);
+  if(pos<0||!STATE.ko.picks) return;
+  for(let r=pos+1;r<order.length;r++){
+    Object.keys(STATE.ko.picks).forEach(k=>{if(k.startsWith(order[r]+"_"))delete STATE.ko.picks[k];});
+  }
+  Object.keys(STATE.ko.picks).forEach(k=>{if(k.startsWith("third_"))delete STATE.ko.picks[k];});
+}
+function seedBracket(){
+  // só é possível gerar manualmente se TODOS os jogos da fase de grupos tiverem placar
+  if(!allGroupsComplete()){ openModal(t("ko_need_complete"), false); return; }
+  buildSeed();
+  saveState();renderKO();
+}
+
+/* ============================================================
+   RANKING FIFA + SIMULAÇÃO automática
+   ============================================================ */
+function renderRanking(){
+  const body=document.getElementById("ranking-body"); if(!body) return;
+  const arr=Object.entries(RANK).sort((a,b)=>a[1]-b[1]);
+  const rows=arr.map(([team,pos])=>`<tr>
+    <td class="pts" style="width:42px">${pos}º</td>
+    <td class="team"><span class="flag">${flag(team)}</span>${team}</td></tr>`).join("");
+  body.innerHTML=`<div class="group"><table><tbody>${rows}</tbody></table></div>`;
+}
+function betterRanked(a,b){ if(!a) return b; if(!b) return a; return (RANK[a]||999)<=(RANK[b]||999)?a:b; }
+function predictScore(home,away){
+  const diff=(RANK[away]||50)-(RANK[home]||50); // >0 => mandante mais forte
+  if(Math.abs(diff)<=2) return [1,1];
+  if(diff>0) return [diff>18?3:2, diff>18?0:1];
+  const d=-diff; return [d>18?0:1, d>18?3:2];
+}
+// placar previsto para o mata-mata (nunca termina empatado)
+function predictKO(a,b){ let s=predictScore(a,b),ga=s[0],gb=s[1];
+  if(ga===gb){ if((RANK[a]||999)<=(RANK[b]||999)) ga++; else gb++; } return [ga,gb]; }
+// preenche apenas os confrontos AINDA não decididos (mantém o que o usuário já colocou)
+function autoAdvanceKO(){
+  STATE.ko.picks=STATE.ko.picks||{}; STATE.ko.scores=STATE.ko.scores||{};
+  const fill=(tie,k)=>{ if(tie&&tie.a&&tie.b&&!STATE.ko.picks[k]){
+      const g=predictKO(tie.a,tie.b); STATE.ko.scores[k]={hs:g[0],as:g[1]}; STATE.ko.picks[k]= g[0]>=g[1]?tie.a:tie.b; } };
+  ["r32","r16","qf","sf","final"].forEach(key=>{
+    const b=buildBracket(); const ties = key==="final"?[b.final]:b[key];
+    ties.forEach((tie,idx)=>fill(tie,key+"_"+idx));
+  });
+  const b=buildBracket(); fill(b.third,"third_0");
+}
+// preenche placares dos jogos que ainda não aconteceram (por ranking) e simula o mata-mata
+function simulate(){
+  const sim=new Set(STATE.simIds||[]);
+  STATE.matches.forEach(mt=>{
+    const base=BASE_MATCHES.find(b=>b.id===mt.id);
+    const official = base && base.hs!==null && base.as!==null;
+    if(!official && (mt.hs===null || mt.as===null)){
+      const [h,a]=predictScore(mt.home,mt.away); mt.hs=h; mt.as=a; sim.add(mt.id);
+    }
+  });
+  STATE.simIds=[...sim];
+  buildSeed();
+  autoAdvanceKO();
+  showPastDates=true; // ao simular, mostra todas as datas (incl. os jogos simulados)
+  saveState(); renderStandings(); renderMatches(); renderToast(); renderKO();
+}
+// limpa tudo que ainda não aconteceu oficialmente (jogos simulados/futuros) e zera o mata-mata
+function clearUnplayed(){
+  STATE.matches.forEach(mt=>{
+    const base=BASE_MATCHES.find(b=>b.id===mt.id);
+    if(!base || base.hs===null || base.as===null){ mt.hs=null; mt.as=null; }
+  });
+  STATE.simIds=[]; STATE.ko={};
+  saveState(); renderStandings(); renderMatches(); renderToast(); renderKO();
+}
+// carimbo da última edição feita pelo usuário
+function renderUserStamp(){
+  const txt = STATE && STATE.updatedAt
+    ? t("your_update")+" "+new Intl.DateTimeFormat(LOCALE[LANG]||"pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:curTZ()}).format(new Date(STATE.updatedAt))
+    : "";
+  ["user-update","user-update-2"].forEach(id=>{const e=document.getElementById(id); if(e) e.textContent=txt;});
+}
+
+/* ============================================================
+   ESTATÍSTICAS OFICIAIS DA FIFA (até a 2ª rodada — 21/06/2026)
+   ============================================================ */
+const STATS_UPDATED="21/06/2026";
+const POWER_LEADERS=[["⚔️","Deniz UNDAV","GER","9.22"],["🎨","Julio ENCISO","PAR","7.82"],["🛡️","Derek CORNELIUS","CAN","7.46"]];
+// [pos, jogador, país, ataque, criatividade, defesa]
+const POWER=[
+  ["Deniz UNDAV","GER",9.22,7.15,4.73],["Lionel MESSI","ARG",7.76,7.29,4.87],
+  ["Crysencio SUMMERVILLE","NED",7.35,6.76,5.16],["Vinicius Junior","BRA",7.34,6.74,4.23],
+  ["Kylian MBAPPE","FRA",7.12,6.32,4.38],["Maxi ARAUJO","URU",7.05,6.75,4.76],
+  ["Cyle LARIN","CAN",7.05,5.11,5.51],["Elijah JUST","NZL",7.01,6.8,4.79],
+  ["Harry KANE","ENG",6.85,5.68,4.62],["Brian BROBBEY","NED",6.85,5.31,5.4]
+];
+// [jogador, sel, posição, gols, assistências, minutos]
+const SCORERS=[
+  ["Deniz Undav","GER","ATA",3,2,69],["Lionel Messi","ARG","ATA",3,0,83],["Jonathan David","CAN","ATA",3,0,170],
+  ["Crysencio Summerville","NED","ATA",2,1,123],["Mikel Oyarzabal","ESP","ATA",2,1,149],["Maxi Araujo","URU","MEI",2,1,173],
+  ["Ayase Ueda","JPN","ATA",2,1,174],["Cody Gakpo","NED","ATA",2,1,181],["Vinicius Junior","BRA","ATA",2,1,190],
+  ["Brian Brobbey","NED","ATA",2,0,88],["Harry Kane","ENG","ATA",2,0,102],["Erling Haaland","NOR","ATA",2,0,103],
+  ["Kylian Mbappe","FRA","ATA",2,0,105],["Matheus Cunha","BRA","ATA",2,0,108],["Cyle Larin","CAN","ATA",2,0,125],
+  ["Folarin Balogun","USA","ATA",2,0,179],["Ismael Saibari","MAR","MEI",2,0,180],["Kai Havertz","GER","ATA",2,0,192],
+  ["Alexander Isak","SWE","ATA",1,3,194],["Mohamed Salah","EGY","ATA",1,2,168]
+];
+// Assistências (a FIFA lista como coluna, não como ranking — montado a partir dos dados de jogadores)
+// [jogador, sel, assistências, gols, minutos]
+const ASSISTS=[
+  ["Alexander Isak","SWE",3,1,194],["Deniz Undav","GER",2,3,69],["Mohamed Salah","EGY",2,1,168],
+  ["Crysencio Summerville","NED",1,2,123],["Mikel Oyarzabal","ESP",1,2,149],["Maxi Araujo","URU",1,2,173],
+  ["Ayase Ueda","JPN",1,2,174],["Cody Gakpo","NED",1,2,181],["Vinicius Junior","BRA",1,2,190],
+  ["Luis Diaz","COL",1,1,97],["Ruben Vargas","SUI",1,1,110],["Mostafa Zico","EGY",1,1,159]
+];
+// [seleção, gols, assistências, finalizações, posse%, escanteios]
+const TEAMSTATS=[
+  ["Alemanha",9,8,42,54,16],["Países Baixos",7,7,20,52,7],["Canadá",7,2,46,59,28],["Estados Unidos",6,3,26,58,10],
+  ["Suécia",6,5,29,45,9],["Japão",6,6,19,46,9],["Suíça",5,2,39,58,17],["Noruega",4,2,11,57,5],
+  ["Espanha",4,3,49,64,17],["Inglaterra",4,3,22,49,8],["Egito",4,4,33,44,10],["Brasil",4,3,19,48,10],
+  ["Colômbia",3,3,15,57,4],["México",3,2,24,49,3],["Nova Zelândia",3,3,25,42,5],["Argentina",3,2,10,45,2],
+  ["França",3,2,11,49,6],["Uruguai",3,1,44,59,25],["Áustria",3,1,10,53,4],["Paraguai",2,2,16,24,1],
+  ["Costa do Marfim",2,1,24,42,6],["Croácia",2,2,10,44,2],["Coreia do Sul",2,2,24,54,6],["Marrocos",2,2,26,50,7],
+  ["República Tcheca",2,2,21,33,10],["Bósnia-Herzegovina",2,1,13,32,7],["Irã",2,1,24,37,6],["Austrália",2,1,14,29,9],
+  ["Cabo Verde",2,0,18,29,5],["Gana",1,1,7,36,2],["Portugal",1,1,7,69,5],["África do Sul",1,0,20,48,6],
+  ["RD Congo",1,1,8,25,4],["Jordânia",1,1,11,33,3],["Uzbequistão",1,0,8,34,3],["Catar",1,0,8,25,4],
+  ["Arábia Saudita",1,0,10,29,5],["Curaçao",1,0,18,29,1],["Iraque",1,1,11,35,2],["Bélgica",1,0,38,52,6],
+  ["Escócia",1,0,15,40,5],["Tunísia",1,1,8,40,5],["Senegal",1,1,6,44,4],["Argélia",0,0,7,51,2],
+  ["Turquia",0,0,62,65,20],["Haiti",0,0,22,47,8],["Panamá",0,0,11,56,2],["Equador",0,0,39,58,14]
+];
+function renderStats(){
+  const body=document.getElementById("stats-body"); if(!body) return;
+  const card=(title,head,rows)=>`<div class="group"><h3>${title}</h3>
+    <table><thead><tr>${head.map((h,i)=>`<th${i===0?' style="text-align:left"':(i===1?' style="text-align:left"':'')}>${h}</th>`).join("")}</tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+  // Power Rankings (craques)
+  const lead=POWER_LEADERS.map(l=>`<span class="pwr-lead">${l[0]} <b>${l[1]}</b> <span class="muted">${l[2]}</span> · ${l[3]}</span>`).join("");
+  const powRows=POWER.map((p,i)=>`<tr><td class="pts">${i+1}</td><td class="team">${p[0]}</td><td class="muted">${p[1]}</td>
+    <td>${p[2].toFixed(2)}</td><td>${p[3].toFixed(2)}</td><td>${p[4].toFixed(2)}</td></tr>`).join("");
+  // Artilheiros
+  const scRows=SCORERS.map((p,i)=>`<tr><td class="pts">${i+1}</td><td class="team">${p[0]}</td><td class="muted">${p[1]}</td>
+    <td><b>${p[3]}</b></td><td>${p[4]}</td><td class="muted">${p[5]}'</td></tr>`).join("");
+  // Assistências
+  const asRows=ASSISTS.map((p,i)=>`<tr><td class="pts">${i+1}</td><td class="team">${p[0]}</td><td class="muted">${p[1]}</td>
+    <td><b>${p[2]}</b></td><td>${p[3]}</td><td class="muted">${p[4]}'</td></tr>`).join("");
+  // Por seleção
+  const tmRows=TEAMSTATS.map((tm,i)=>`<tr><td class="pts">${i+1}</td><td class="team"><span class="flag">${flag(tm[0])}</span>${tm[0]}</td>
+    <td><b>${tm[1]}</b></td><td>${tm[2]}</td><td>${tm[3]}</td><td>${tm[4]}%</td><td>${tm[5]}</td></tr>`).join("");
+  body.innerHTML=
+    `<div class="pwr-leaders">${lead}</div>`+
+    card(t("st_power"),["#",t("th_player"),"Sel","ATA","CRI","DEF"],powRows)+
+    card(t("st_scorers"),["#",t("th_player"),"Sel","G","A","Min"],scRows)+
+    card(t("st_assists"),["#",t("th_player"),"Sel","A","G","Min"],asRows)+
+    card(t("st_teams"),["#",t("th_player"),"G","A","Fin","Pos%","Esc"],tmRows);
+}
+
+/* ============================================================
+   NAVEGAÇÃO + INIT
+   ============================================================ */
+document.querySelectorAll("nav button").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.view).classList.add("active");
+    if(btn.dataset.view==="ko") renderKO();
+    if(btn.dataset.view==="standings") renderStandings();
+    if(btn.dataset.view==="ranking") renderRanking();
+    if(btn.dataset.view==="stats") renderStats();
+    if(btn.dataset.view==="studio" && typeof setPreview==="function" && !previewLoaded) setPreview(375);
+  });
+});
+document.getElementById("f-round").addEventListener("change",renderMatches);
+document.getElementById("f-group").addEventListener("change",renderMatches);
+document.getElementById("f-team").addEventListener("change",renderMatches);
+document.getElementById("clear-round").addEventListener("click",clearUnplayed);
+document.getElementById("ko-seed").addEventListener("click",seedBracket);
+const koSimBtn=document.getElementById("ko-sim");
+if(koSimBtn) koSimBtn.addEventListener("click",()=>{ if(!STATE.ko.r32) return; autoAdvanceKO(); saveState(); renderKO(); });
+document.getElementById("ko-reset").addEventListener("click",()=>{
+  // se os resultados vieram de uma simulação, desfaz a simulação inteira (resultados simulados + chaveamento);
+  // caso contrário, apenas zera os palpites do mata-mata, mantendo os resultados preenchidos.
+  if(STATE.simIds && STATE.simIds.length){ clearUnplayed(); }
+  else { STATE.ko={}; saveState(); renderKO(); }
+});
+
+// Botão Atualizar + carimbo de última atualização
+function countPlayed(){return STATE.matches.filter(x=>x.hs!==null&&x.as!==null).length;}
+// aplica os resultados oficiais embutidos (não-nulos) sobre o estado e recalcula tudo
+function refreshOfficial(){
+  let updated=0;
+  STATE.matches.forEach(mt=>{
+    const base=BASE_MATCHES.find(b=>b.id===mt.id);
+    if(base && base.hs!==null && base.as!==null && (mt.hs!==base.hs || mt.as!==base.as)){
+      mt.hs=base.hs; mt.as=base.as; updated++;
+    }
+  });
+  saveState(); renderStandings(); renderMatches(); renderToast();
+  return updated;
+}
+function openModal(html, showNote){
+  document.getElementById("modal-text").innerHTML=html;
+  const note=document.getElementById("modal-note"); if(note) note.style.display = showNote?"":"none";
+  document.getElementById("modal-bg").classList.add("show");
+}
+function doUpdate(){
+  refreshOfficial();
+  openModal(t("modal_text").replace("{date}",t("updated_value")).replace("{n}",countPlayed()), true);
+}
+document.getElementById("btn-atualizar").addEventListener("click",doUpdate);
+const btnUp2=document.getElementById("btn-atualizar-2"); if(btnUp2) btnUp2.addEventListener("click",doUpdate);
+// Ranking: Simular e Limpar
+const btnSim=document.getElementById("btn-simular");
+if(btnSim) btnSim.addEventListener("click",()=>{ simulate(); openModal(t("sim_done"), false); });
+const btnClearFut=document.getElementById("btn-clear-future");
+if(btnClearFut) btnClearFut.addEventListener("click",clearUnplayed);
+// Atualizar estatísticas (mesmo modelo do Atualizar resultados)
+const btnStats=document.getElementById("btn-atualizar-stats");
+if(btnStats) btnStats.addEventListener("click",()=>openModal(t("st_done"),false));
+document.getElementById("modal-ok").addEventListener("click",()=>document.getElementById("modal-bg").classList.remove("show"));
+document.getElementById("modal-bg").addEventListener("click",e=>{if(e.target.id==="modal-bg")e.target.classList.remove("show");});
+
+// Seletor de idioma
+const langSel=document.getElementById("lang-select");
+LANGS.forEach(([code,name])=>langSel.add(new Option(name,code)));
+langSel.value=LANG;
+langSel.addEventListener("change",()=>{ LANG=langSel.value; localStorage.setItem("copa2026_lang",LANG); applyI18n(); });
+
+// Toast: minimizar/expandir (estado salvo)
+const toastEl=document.getElementById("toast"), toastMinBtn=document.getElementById("toast-min");
+function setToastMin(min){
+  toastEl.classList.toggle("min",min);
+  toastMinBtn.textContent=min?"▢":"▁";
+  localStorage.setItem("copa2026_toast_min",min?"1":"0");
+}
+document.getElementById("toast-head").addEventListener("click",()=>setToastMin(!toastEl.classList.contains("min")));
+setToastMin(false); // estado inicial: toast sempre aberto (expandido) ao carregar
+
+// Doação Pix (BR Code estático com CRC16) — Projeto Social Garapuvu
+function buildPix(){
+  const f=(id,v)=>id+String(v.length).padStart(2,"0")+v;
+  const merchant=f("00","br.gov.bcb.pix")+f("01","08087585941");
+  let s=f("00","01")+f("26",merchant)+f("52","0000")+f("53","986")+f("58","BR")
+       +f("59","PROJETO GARAPUVU")+f("60","BRASIL")+f("62",f("05","***"))+"6304";
+  let crc=0xFFFF;
+  for(let i=0;i<s.length;i++){ crc^=s.charCodeAt(i)<<8;
+    for(let j=0;j<8;j++){ crc=(crc&0x8000)?((crc<<1)^0x1021):(crc<<1); crc&=0xFFFF; } }
+  return s+crc.toString(16).toUpperCase().padStart(4,"0");
+}
+(function initPix(){
+  const code=buildPix();
+  const inp=document.getElementById("pix-code"); if(inp) inp.value=code;
+  const qr=document.getElementById("pix-qr");
+  if(qr) qr.src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=0&data="+encodeURIComponent(code);
+  const btn=document.getElementById("pix-copy");
+  if(btn) btn.addEventListener("click",()=>{
+    try{ navigator.clipboard.writeText(code); }catch(e){ inp.select(); try{document.execCommand("copy");}catch(_){} }
+    btn.textContent=t("pix_copied"); setTimeout(()=>btn.textContent=t("pix_copy"),1500);
+  });
+})();
+
+// ---- Tema claro/escuro (modo clean) no cabeçalho ----
+const modeBtn=document.getElementById("mode-toggle");
+function applyMode(m){ document.documentElement.classList.toggle("clean", m==="clean"); if(modeBtn) modeBtn.textContent=m==="clean"?"☀️":"🌙"; }
+applyMode(localStorage.getItem("copa2026_mode")||"dark");
+if(modeBtn) modeBtn.addEventListener("click",()=>{ const m=document.documentElement.classList.contains("clean")?"dark":"clean"; localStorage.setItem("copa2026_mode",m); applyMode(m); });
+
+// ---- Estúdio: editor de cores/fonte ----
+const THEME_KEY="copa2026_theme";
+let THEME={}; try{ THEME=JSON.parse(localStorage.getItem(THEME_KEY))||{}; }catch(e){ THEME={}; }
+(function applyTheme(){ for(const k in THEME){ if(k==="__font") document.body.style.fontFamily=THEME[k]; else document.documentElement.style.setProperty(k,THEME[k]); } })();
+function syncColorInputs(){ document.querySelectorAll('.theme-grid input[type=color]').forEach(inp=>{
+  const v=THEME[inp.dataset.var];
+  if(v){ inp.value=v; return; }
+  try{ const cv=getComputedStyle(document.documentElement).getPropertyValue(inp.dataset.var).trim(); if(/^#[0-9a-fA-F]{6}$/.test(cv)) inp.value=cv; }catch(e){}
+}); }
+syncColorInputs();
+document.querySelectorAll('.theme-grid input[type=color]').forEach(inp=>inp.addEventListener("input",()=>{
+  THEME[inp.dataset.var]=inp.value; document.documentElement.style.setProperty(inp.dataset.var,inp.value);
+  localStorage.setItem(THEME_KEY,JSON.stringify(THEME));
+}));
+const fontSel=document.getElementById("font-sel");
+if(fontSel){ if(THEME.__font!=null) fontSel.value=THEME.__font;
+  fontSel.addEventListener("change",()=>{ THEME.__font=fontSel.value; document.body.style.fontFamily=fontSel.value||""; localStorage.setItem(THEME_KEY,JSON.stringify(THEME)); }); }
+const themeReset=document.getElementById("theme-reset");
+if(themeReset) themeReset.addEventListener("click",()=>{ THEME={}; localStorage.removeItem(THEME_KEY);
+  document.documentElement.style.cssText=""; document.body.style.fontFamily=""; if(fontSel) fontSel.value=""; syncColorInputs(); });
+
+// ---- Estúdio: pré-visualização responsiva ----
+const previewFrame=document.getElementById("preview-frame");
+let previewLoaded=false;
+function setPreview(w){ if(!previewFrame) return; if(!previewLoaded){ previewFrame.src=location.href; previewLoaded=true; }
+  previewFrame.style.width=w+"px"; document.querySelectorAll('#studio-sizes .btn').forEach(b=>b.classList.toggle('on',+b.dataset.w===w)); }
+document.querySelectorAll('#studio-sizes .btn').forEach(b=>b.addEventListener("click",()=>setPreview(+b.dataset.w)));
+
+saveState();  // regrava o estado já com a versão atual (corrige dados antigos salvos no navegador)
+applyI18n();  // popula filtros + renderiza tudo no idioma escolhido
+
+// faz o minuto do jogo ao vivo "andar" sozinho (derivado do relógio, sem buscar dados)
+setInterval(()=>{
+  if(!LIVE_IDS.size) return;
+  const m=document.getElementById("matches");
+  const typing=document.activeElement && document.activeElement.classList && document.activeElement.classList.contains("sc");
+  if(m && m.classList.contains("active") && !typing) renderMatches();
+},30000);
+</script>
+</body>
+</html>
