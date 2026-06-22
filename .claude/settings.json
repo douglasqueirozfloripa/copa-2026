@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git init *)"
+      "Bash(git init *)",
+      "Bash(git branch *)",
+      "Bash(GH_HOST=github.com gh repo create copa-2026 --public --source=. --remote=origin --description \"Aplicativo de resultados dos jogos da Copa do Mundo 2026\")",
+      "Bash(gh repo *)",
+      "Bash(GH_TOKEN=\"\" gh repo delete douglasqueirozclinicorp/copa-2026 --yes)"
     ]
   }
 }

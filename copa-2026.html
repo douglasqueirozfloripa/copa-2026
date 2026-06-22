@@ -462,7 +462,7 @@ const DATA_VERSION = 4; // ao atualizar os resultados oficiais embutidos, increm
 const LIVE_IDS = new Set([41]);            // Argentina x Áustria
 // minuto REAL ancorado no valor da FIFA: {m: minuto, h: "1T"|"2T"|"INT", at: instante (ms) em que esse minuto valia}
 // o relógio do app "anda" a partir daí, então fica em tempo real e bate com a FIFA. Atualizado pela rotina automática.
-const LIVE_INFO = {41:{m:61,h:"2T",at:Date.parse("2026-06-22T18:16:00Z")}};
+const LIVE_INFO = {41:{m:69,h:"2T"}};      // minuto exato vindo da FIFA (atualizado pela rotina; refresh para ver)
 const CHANNELS = ["Globo","SBT","sportv","Cazé TV","Globoplay","N Sports","GE TV"]; // transmissão (Brasil)
 // Códigos FIFA p/ bandeiras oficiais: https://api.fifa.com/api/v3/picture/flags-sq-1/{CODE}
 const CODES = {
@@ -879,10 +879,9 @@ function liveStatus(mt){
 // minuto/status PRECISO da FIFA (preenchido pela rotina automática), correndo em tempo real a partir da âncora.
 function liveLabel(mt){
   const li=LIVE_INFO[mt.id];
-  if(li && typeof li==="object" && li.at){
+  if(li && typeof li==="object"){
     if(li.h==="INT") return "Intervalo";
-    const m=li.m + Math.floor((Date.now()-li.at)/60000); // anda em tempo real desde a âncora
-    return m+"' · "+(li.h==="1T"?"1º tempo":"2º tempo");
+    return (li.m!=null?li.m+"' · ":"")+(li.h==="1T"?"1º tempo":"2º tempo");
   }
   if(typeof li==="string" && li) return li;
   return liveStatus(mt);
@@ -1470,14 +1469,6 @@ document.querySelectorAll('#studio-sizes .btn').forEach(b=>b.addEventListener("c
 
 saveState();  // regrava o estado já com a versão atual (corrige dados antigos salvos no navegador)
 applyI18n();  // popula filtros + renderiza tudo no idioma escolhido
-
-// faz o minuto do jogo ao vivo "andar" sozinho (derivado do relógio, sem buscar dados)
-setInterval(()=>{
-  if(!LIVE_IDS.size) return;
-  const m=document.getElementById("matches");
-  const typing=document.activeElement && document.activeElement.classList && document.activeElement.classList.contains("sc");
-  if(m && m.classList.contains("active") && !typing) renderMatches();
-},30000);
 </script>
 </body>
 </html>
