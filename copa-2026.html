@@ -469,11 +469,11 @@ const FLAGS = {
 const LAST_UPDATE = "22 de junho de 2026 (fim da 2ª rodada)";
 const DATA_VERSION = 10; // ao atualizar os resultados oficiais embutidos, incrementar este número
 // jogos EM ANDAMENTO (placar parcial) — atualizado por mim ao buscar na FIFA
-const LIVE_IDS = new Set([41]);            // Argentina x Áustria (inicial; vira dinâmico após o crawler)
+// "Ao vivo" é 100% DINÂMICO: só aparece quando o crawler (server.js) captura um jogo em andamento.
+// Nada fica fixo aqui — assim um jogo já encerrado (ex.: Argentina 2x0 FIM) NÃO volta a aparecer ao vivo no refresh.
+const LIVE_IDS = new Set();                // preenchido por applyScraped() a partir da captura da FIFA
 const LIVE_NOW = {};                       // id -> {hs,as,label,ts} capturado AO VIVO da FIFA pelo atualizador local
-// minuto REAL ancorado no valor da FIFA: {m: minuto, h: "1T"|"2T"|"INT", at: instante (ms) em que esse minuto valia}
-// o relógio do app "anda" a partir daí, então fica em tempo real e bate com a FIFA. Atualizado pela rotina automática.
-const LIVE_INFO = {41:{m:82,h:"2T",at:1782153994847}}; // minuto da FIFA (m) no instante (at); o app faz o minuto andar em tempo real
+const LIVE_INFO = {};                      // (legado) sem âncora fixa — o minuto ao vivo vem do crawler em LIVE_NOW
 const CHANNELS = ["Globo","SBT","sportv","Cazé TV","Globoplay","N Sports","GE TV"]; // transmissão (Brasil)
 const FIFA_FIXTURES_URL = "https://www.fifa.com/pt/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures?country=BR&wtw-filter=ALL";
 // Códigos FIFA p/ bandeiras oficiais: https://api.fifa.com/api/v3/picture/flags-sq-1/{CODE}
@@ -631,9 +631,13 @@ function flagErr(img){img.outerHTML=img.dataset.emoji||"";}
 /* ============================================================
    I18N — idiomas das seleções participantes
    ============================================================ */
-const LANGS=[["pt","Português"],["en","English"],["es","Español"],["fr","Français"],
+const LANGS=[["pt","Português (Brasil)"],["pt-PT","Português (Portugal)"],
+  ["en","English (USA)"],["en-GB","English (UK)"],["en-AU","English (Australia)"],
+  ["es","Español (México)"],["es-ES","Español (España)"],["es-AR","Español (Argentina)"],
+  ["fr","Français (France)"],["fr-CA","Français (Canada)"],
   ["de","Deutsch"],["nl","Nederlands"],["it","Italiano"],["hr","Hrvatski"],["no","Norsk"],
-  ["sv","Svenska"],["cs","Čeština"],["bs","Bosanski"],["tr","Türkçe"],["ar","العربية"],
+  ["sv","Svenska"],["cs","Čeština"],["bs","Bosanski"],["tr","Türkçe"],
+  ["ar","العربية (السعودية)"],["ar-EG","العربية (مصر)"],
   ["fa","فارسی"],["ja","日本語"],["ko","한국어"],["uz","Oʻzbekcha"]];
 const LOCALE={pt:"pt-BR",en:"en",es:"es",fr:"fr",de:"de",nl:"nl",it:"it",hr:"hr",no:"nb",
   sv:"sv",cs:"cs",bs:"bs",tr:"tr",ar:"ar",fa:"fa",ja:"ja",ko:"ko",uz:"uz"};
@@ -771,6 +775,22 @@ const TZ={pt:"America/Sao_Paulo",en:"America/New_York",es:"America/Mexico_City",
   de:"Europe/Berlin",nl:"Europe/Amsterdam",it:"Europe/Rome",hr:"Europe/Zagreb",no:"Europe/Oslo",
   sv:"Europe/Stockholm",cs:"Europe/Prague",bs:"Europe/Sarajevo",tr:"Europe/Istanbul",ar:"Asia/Riyadh",
   fa:"Asia/Tehran",ja:"Asia/Tokyo",ko:"Asia/Seoul",uz:"Asia/Tashkent"};
+// variantes regionais: mesmo idioma (reaproveita a tradução base), mas com locale e fuso
+// horário do país escolhido (capital). Mantém os códigos base p/ compatibilidade.
+const VARIANTS={
+  "pt-PT":{base:"pt",loc:"pt-PT",tz:"Europe/Lisbon"},                       // Lisboa
+  "en-GB":{base:"en",loc:"en-GB",tz:"Europe/London"},                       // Londres
+  "en-AU":{base:"en",loc:"en-AU",tz:"Australia/Sydney"},                    // Camberra/Sydney
+  "es-ES":{base:"es",loc:"es-ES",tz:"Europe/Madrid"},                       // Madri
+  "es-AR":{base:"es",loc:"es-AR",tz:"America/Argentina/Buenos_Aires"},      // Buenos Aires
+  "fr-CA":{base:"fr",loc:"fr-CA",tz:"America/Toronto"},                     // Ottawa
+  "ar-EG":{base:"ar",loc:"ar-EG",tz:"Africa/Cairo"}                         // Cairo
+};
+for(const code in VARIANTS){ const v=VARIANTS[code];
+  I18N[code]=I18N[v.base];               // reaproveita a tradução do idioma base
+  LOCALE[code]=v.loc; TZ[code]=v.tz;     // formatação e fuso próprios do país
+  if(RTL.has(v.base)) RTL.add(code);     // herda direção do texto (ex.: ar-EG)
+}
 // ranking FIFA aproximado das 48 seleções (1 = melhor) — base da simulação
 const RANK={"Argentina":1,"França":2,"Espanha":3,"Inglaterra":4,"Brasil":5,"Portugal":6,"Países Baixos":7,
   "Bélgica":8,"Alemanha":9,"Croácia":10,"Marrocos":11,"Colômbia":12,"Uruguai":13,"Estados Unidos":14,
@@ -953,7 +973,7 @@ function fmtParts(mt){
   const dt=matchDT(mt), loc=LOCALE[LANG]||"pt-BR", tz=curTZ();
   const dayKey=new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"}).format(dt);
   const dateLabel=new Intl.DateTimeFormat(loc,{timeZone:tz,weekday:"short",day:"2-digit",month:"short"}).format(dt);
-  const time=new Intl.DateTimeFormat(loc,{timeZone:tz,hour:"2-digit",minute:"2-digit",hour12:false}).format(dt);
+  const time=new Intl.DateTimeFormat(loc,{timeZone:tz,hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(dt);
   return {dayKey,dateLabel,time,dt};
 }
 function fmtDate(iso){const [y,mo,d]=iso.split("-").map(Number);const dt=new Date(Date.UTC(y,mo-1,d));
@@ -1509,6 +1529,16 @@ async function crawlUpdate(){
 }
 document.getElementById("btn-atualizar").addEventListener("click",crawlUpdate);
 const btnUp2=document.getElementById("btn-atualizar-2"); if(btnUp2) btnUp2.addEventListener("click",crawlUpdate);
+// Auto-sincroniza ao ABRIR pelo servidor local (http://localhost:8787): aplica a captura mais recente
+// sem modal e inicia o polling se houver jogo ao vivo. Assim a página já abre atualizada.
+(async function autoSyncOnLoad(){
+  if(location.protocol!=="http:"&&location.protocol!=="https:") return; // aberto como arquivo: não tenta
+  try{
+    const {live}=applyScraped(await fetchScrape());
+    renderStandings(); renderMatches(); renderToast();
+    if(live>0) startLivePoll();
+  }catch(e){ /* servidor/endpoint indisponível: mantém os dados oficiais embutidos */ }
+})();
 // Ranking: Simular e Limpar
 const btnSim=document.getElementById("btn-simular");
 if(btnSim) btnSim.addEventListener("click",()=>{ simulate(); openModal(t("sim_done"), false); });
