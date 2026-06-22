@@ -457,12 +457,12 @@ const FLAGS = {
   "Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croácia":"🇭🇷","Gana":"🇬🇭","Panamá":"🇵🇦"
 };
 const LAST_UPDATE = "22 de junho de 2026 (fim da 2ª rodada)";
-const DATA_VERSION = 4; // ao atualizar os resultados oficiais embutidos, incrementar este número
+const DATA_VERSION = 6; // ao atualizar os resultados oficiais embutidos, incrementar este número
 // jogos EM ANDAMENTO (placar parcial) — atualizado por mim ao buscar na FIFA
 const LIVE_IDS = new Set([41]);            // Argentina x Áustria
 // minuto REAL ancorado no valor da FIFA: {m: minuto, h: "1T"|"2T"|"INT", at: instante (ms) em que esse minuto valia}
 // o relógio do app "anda" a partir daí, então fica em tempo real e bate com a FIFA. Atualizado pela rotina automática.
-const LIVE_INFO = {41:{m:69,h:"2T"}};      // minuto exato vindo da FIFA (atualizado pela rotina; refresh para ver)
+const LIVE_INFO = {41:{m:75,h:"2T"}}; // minuto da FIFA (m) no instante (at); o app faz andar em tempo real
 const CHANNELS = ["Globo","SBT","sportv","Cazé TV","Globoplay","N Sports","GE TV"]; // transmissão (Brasil)
 // Códigos FIFA p/ bandeiras oficiais: https://api.fifa.com/api/v3/picture/flags-sq-1/{CODE}
 const CODES = {
@@ -881,7 +881,11 @@ function liveLabel(mt){
   const li=LIVE_INFO[mt.id];
   if(li && typeof li==="object"){
     if(li.h==="INT") return "Intervalo";
-    return (li.m!=null?li.m+"' · ":"")+(li.h==="1T"?"1º tempo":"2º tempo");
+    // âncora: minuto m no instante at (epoch ms). O relógio faz o minuto andar em tempo real.
+    const extra = li.at ? Math.max(0,Math.floor((Date.now()-li.at)/60000)) : 0;
+    const m = (li.m!=null?li.m:0) + extra;
+    if(m>120) return (li.h==="1T"?"1º tempo":"2º tempo");
+    return m+"' · "+(li.h==="1T"?"1º tempo":"2º tempo");
   }
   if(typeof li==="string" && li) return li;
   return liveStatus(mt);
